@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DeckAI by Ruby Wall</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --ruby: #D41535;
+  --ruby-light: #FF4D6A;
+  --ruby-pale: #FFE8EC;
+  --ruby-pale2: #FFF4F6;
+  --off-white: #F7F8FC;
+  --white: #FFFFFF;
+  --border: #F0E8EA;
+  --text: #1A0A0D;
+  --text-mid: #6B3A44;
+  --text-muted: #B08890;
+  --shadow: rgba(212,21,53,0.10);
+  --shadow-soft: rgba(0,0,0,0.06);
+  --green: #22C55E;
+  --gold: #F59E0B;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;}
+::selection{background:rgba(212,21,53,0.15);}
+
+/* ── Animations ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+.fade-in{animation:fadeIn .3s ease forwards;}
+
+/* ── Screens ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;border:none;transition:all .18s ease;text-decoration:none;}
+.btn:hover{transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--ruby),var(--ruby-light));color:#fff;box-shadow:0 6px 20px var(--shadow);}
+.btn-primary:hover{box-shadow:0 10px 28px rgba(212,21,53,0.3);}
+.btn-secondary{background:#fff;color:var(--text-mid);border:1.5px solid var(--border);box-shadow:0 2px 8px var(--shadow-soft);}
+.btn-secondary:hover{border-color:var(--ruby);color:var(--ruby);}
+.btn-sm{padding:8px 16px;font-size:12px;border-radius:10px;}
+.btn-danger{background:#FEF2F2;color:#DC2626;border:1.5px solid #FECACA;}
+
+/* ── Cards ── */
+.card{background:#fff;border-radius:20px;border:1px solid var(--border);box-shadow:0 4px 24px var(--shadow-soft);padding:28px;}
+
+/* ── Form fields ── */
+.field{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:500;color:var(--text);background:#FAFAFA;outline:none;transition:border-color .15s,box-shadow .15s;}
+.field:focus{border-color:var(--ruby);box-shadow:0 0 0 3px rgba(212,21,53,0.10);background:#fff;}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:6px;}
+.field-group{margin-bottom:16px;}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:24px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;}
+.badge-ruby{background:var(--ruby-pale);color:var(--ruby);border:1px solid var(--border);}
+.badge-green{background:#DCFCE7;color:#15803D;border:1px solid #BBF7D0;}
+.badge-gold{background:#FEF9C3;color:#A16207;border:1px solid #FDE68A;}
+.badge-blue{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}
+
+/* ── Header ── */
+.app-header{background:#fff;border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px var(--shadow-soft);}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--ruby),var(--ruby-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;box-shadow:0 4px 12px var(--shadow);}
+.logo-text{font-size:18px;font-weight:900;color:var(--text);}
+.logo-text span{color:var(--ruby);}
+.logo-sub{font-size:9px;color:var(--ruby-light);font-family:'DM Mono',monospace;letter-spacing:0.2em;text-transform:uppercase;}
+
+/* ── Tier colors ── */
+.tier-starter{border-top:4px solid var(--ruby);}
+.tier-standard{border-top:4px solid var(--gold);}
+.tier-premium{border-top:4px solid #8B5CF6;}
+.tier-admin{border-top:4px solid #0EA5E9;}
+
+/* ── Slide canvas ── */
+.slide-wrap{width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;position:relative;font-family:'Nunito',sans-serif;box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+.slide-thumbnail{border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .2s;aspect-ratio:16/9;position:relative;font-size:0.4em;}
+.slide-thumbnail.active{border-color:var(--ruby);box-shadow:0 4px 16px rgba(212,21,53,0.25);transform:scale(1.02);}
+.slide-thumbnail:hover{border-color:rgba(212,21,53,0.4);}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast-item{background:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,0.14);border-left:4px solid var(--ruby);font-size:13px;font-weight:600;color:var(--text);animation:fadeIn .25s ease;max-width:300px;}
+.toast-item.success{border-color:var(--green);}
+.toast-item.error{border-color:#DC2626;}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,10,13,0.55);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:#fff;border-radius:20px;width:100%;max-width:560px;box-shadow:0 24px 80px rgba(0,0,0,0.18);overflow:hidden;}
+.modal-stripe{height:4px;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));}
+.modal-body{padding:32px;}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--ruby-pale2);border-radius:12px;padding:4px;}
+.tab{flex:1;padding:8px;border-radius:9px;border:none;background:transparent;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--text-muted);cursor:pointer;transition:all .15s;}
+.tab.active{background:#fff;color:var(--ruby);box-shadow:0 2px 8px var(--shadow-soft);}
+
+/* ── Presentation grid ── */
+.pres-card{background:#fff;border-radius:16px;border:1px solid var(--border);padding:20px;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px var(--shadow-soft);}
+.pres-card:hover{border-color:var(--ruby);box-shadow:0 6px 24px var(--shadow);transform:translateY(-2px);}
+
+/* ── Edit controls ── */
+.edit-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--ruby-pale2);border-radius:12px;margin-bottom:12px;}
+.edit-toolbar select,.edit-toolbar input[type=color]{border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:'Nunito',sans-serif;font-size:12px;background:#fff;cursor:pointer;}
+
+/* ── Image upload zone ── */
+.upload-zone{border:2px dashed var(--border);border-radius:14px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--ruby);background:var(--ruby-pale2);}
+
+/* ── Progress bar ── */
+.progress-bar{height:6px;background:var(--ruby-pale);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));border-radius:3px;transition:width .3s;}
+
+/* ── Admin table ── */
+.admin-table{width:100%;border-collapse:collapse;}
+.admin-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border);}
+.admin-table td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.admin-table tr:hover td{background:var(--ruby-pale2);}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .app-header{padding:12px 16px;}
+  .deck-layout{grid-template-columns:1fr!important;}
+  .thumb-col{display:flex!important;flex-direction:row!important;overflow-x:auto;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════════════
+     SCREEN 1: AUTH (Login / Create Account)
+════════════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+  <div style="min-height:100vh;background:linear-gradient(135deg,#fff 0%,#FFF4F6 50%,#FFE8EC 100%);display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;">
+    <!-- Decorative circles -->
+    <div style="position:absolute;top:-80px;right:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(212,21,53,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-60px;left:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,106,0.06) 0%,transparent 70%);pointer-events:none;"></div>
+
+    <div style="width:100%;max-width:460px;" class="fade-in">
+      <!-- Logo -->
+      <div style="text-align:center;margin-bottom:32px;">
+        <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--ruby),var(--ruby-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:28px;margin:0 auto 12px;box-shadow:0 8px 24px var(--shadow);">R</div>
+        <div style="font-size:28px;font-weight:900;color:var(--text);">Deck<span style="color:var(--ruby);">AI</span></div>
+        <div style="font-size:10px;color:var(--ruby-light);font-family:'DM Mono',monospace;letter-spacing:0.2em;text-transform:uppercase;margin-top:2px;">by Ruby Wall</div>
+      </div>
+
+      <!-- Card -->
+      <div class="card" style="padding:36px;">
+        <div style="height:4px;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));border-radius:4px;margin:-36px -36px 28px;"></div>
+
+        <!-- Auth Tabs -->
+        <div class="tabs" style="margin-bottom:24px;">
+          <button class="tab active" onclick="switchAuthTab('login')">Sign In</button>
+          <button class="tab" onclick="switchAuthTab('register')">Create Account</button>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="auth-login">
+          <div class="field-group">
+            <label class="field-label">Email Address</label>
+            <input id="login-email" class="field" type="email" placeholder="you@example.com"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Password</label>
+            <input id="login-pass" class="field" type="password" placeholder="Enter your password"/>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="doLogin()">
+            Sign In ✨
+          </button>
+          <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted);">
+            Don't have an account? <a href="#" onclick="switchAuthTab('register')" style="color:var(--ruby);font-weight:700;">View plans & sign up</a>
+          </div>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="auth-register" style="display:none;">
+          <div class="field-group">
+            <label class="field-label">Full Name</label>
+            <input id="reg-name" class="field" type="text" placeholder="Your full name"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Email Address</label>
+            <input id="reg-email" class="field" type="email" placeholder="you@example.com"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Password</label>
+            <input id="reg-pass" class="field" type="password" placeholder="Choose a password (min 6 chars)"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Choose Your Plan</label>
+            <div style="display:grid;gap:10px;margin-top:4px;">
+              <label id="plan-starter" onclick="selectPlan('starter')" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:12px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
+                <input type="radio" name="plan" value="starter" style="margin-top:3px;" checked/>
+                <div>
+                  <div style="font-weight:800;font-size:14px;">🚀 Starter — <span style="color:var(--ruby);">$9.99/mo</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">6 slides · 3 presentations / 48hrs</div>
+                </div>
+              </label>
+              <label id="plan-standard" onclick="selectPlan('standard')" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:12px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
+                <input type="radio" name="plan" value="standard" style="margin-top:3px;"/>
+                <div>
+                  <div style="font-weight:800;font-size:14px;">⭐ Standard — <span style="color:var(--gold);">$15.99/mo</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">12 slides · 5 presentations / 48hrs</div>
+                </div>
+              </label>
+              <label id="plan-premium" onclick="selectPlan('premium')" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:12px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
+                <input type="radio" name="plan" value="premium" style="margin-top:3px;"/>
+                <div>
+                  <div style="font-weight:800;font-size:14px;">💎 Premium — <span style="color:#7C3AED;">$24.99/mo</span></div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">18 slides · 8 presentations / 48hrs</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="doRegister()">
+            Start Subscription 💳
+          </button>
+          <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-muted);background:var(--ruby-pale2);padding:8px 12px;border-radius:8px;border:1px solid var(--border);">
+            💳 Billing begins immediately upon account creation. Cancel anytime.
+          </div>
+          <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted);">
+            Already have an account? <a href="#" onclick="switchAuthTab('login')" style="color:var(--ruby);font-weight:700;">Sign in</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted);">
+        By signing in you agree to Ruby Wall's Terms of Service
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     SCREEN 2: MAIN APP
+════════════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+  <!-- Header -->
+  <header class="app-header">
+    <a href="#" class="logo" onclick="showDashboard()">
+      <div class="logo-mark">R</div>
+      <div>
+        <div class="logo-text">Deck<span>AI</span></div>
+        <div class="logo-sub">by Ruby Wall</div>
+      </div>
+    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="header-plan-badge" class="badge badge-ruby"></div>
+      <div id="header-limit-info" style="font-size:12px;color:var(--text-muted);font-weight:600;"></div>
+      <button class="btn btn-sm btn-secondary" onclick="showDashboard()">📁 My Decks</button>
+      <button id="admin-btn" class="btn btn-sm" style="display:none;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;" onclick="showAdmin()">⚙️ Admin</button>
+      <button class="btn btn-sm btn-secondary" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Dashboard -->
+  <div id="view-dashboard" style="max-width:1100px;margin:0 auto;padding:32px 24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 id="dash-greeting" style="font-size:26px;font-weight:900;color:var(--text);margin-bottom:4px;">Welcome back! 👋</h1>
+        <p id="dash-sub" style="color:var(--text-muted);font-size:14px;font-weight:500;"></p>
+      </div>
+      <button class="btn btn-primary" onclick="showBuilder()">✨ New Presentation</button>
+    </div>
+
+    <!-- Usage card -->
+    <div class="card" id="usage-card" style="margin-bottom:24px;padding:20px 24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:800;font-size:14px;">Presentation Usage</div>
+        <div id="usage-reset-time" style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;"></div>
+      </div>
+      <div class="progress-bar" style="margin-bottom:8px;">
+        <div id="usage-fill" class="progress-fill" style="width:0%"></div>
+      </div>
+      <div id="usage-text" style="font-size:12px;color:var(--text-muted);font-weight:600;"></div>
+    </div>
+
+    <!-- Presentations grid -->
+    <div style="margin-bottom:16px;font-weight:800;font-size:16px;">My Presentations</div>
+    <div id="pres-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+      <div id="pres-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;background:#fff;border-radius:16px;border:1.5px dashed var(--border);">
+        <div style="font-size:48px;margin-bottom:12px;animation:bounce 2s ease infinite;">🎨</div>
+        <div style="font-weight:800;font-size:18px;margin-bottom:6px;">No presentations yet</div>
+        <div style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Create your first AI-powered deck!</div>
+        <button class="btn btn-primary" onclick="showBuilder()">✨ Create My First Deck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Builder -->
+  <div id="view-builder" style="display:none;max-width:1100px;margin:0 auto;padding:32px 24px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <button class="btn btn-sm btn-secondary" onclick="showDashboard()">← Back</button>
+      <h2 style="font-size:20px;font-weight:900;">New Presentation ✨</h2>
+    </div>
+
+    <!-- Prompt card -->
+    <div class="card" style="margin-bottom:24px;">
+      <div style="height:4px;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));border-radius:4px;margin:-28px -28px 24px;"></div>
+      <h3 style="font-weight:900;font-size:18px;margin-bottom:6px;">What's your presentation about? 🎯</h3>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;font-weight:500;">Describe your business, service, or topic — DeckAI builds the rest in seconds.</p>
+      <textarea id="builder-prompt" class="field" rows="3" style="resize:none;" placeholder="e.g. I run a landscaping company in Houston called Green Edge. We offer residential lawn care, irrigation installation, and seasonal cleanups..."></textarea>
+
+      <!-- Photo import -->
+      <div style="margin-top:16px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;">📸 Add Your Photos (optional)</div>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()">
+          <div style="font-size:28px;margin-bottom:8px;">📷</div>
+          <div style="font-weight:700;font-size:14px;color:var(--text-mid);">Click to upload photos</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">PNG, JPG up to 5MB each · These will be available to add to slides</div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)"/>
+        <div id="uploaded-photos" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;"></div>
+      </div>
+
+      <!-- Slide count selector -->
+      <div style="margin-top:20px;padding:16px;background:var(--ruby-pale2);border-radius:14px;border:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:10px;">🎞️ How many slides do you want?</div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="adjustSlideCount(-1)" style="width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ruby);">−</button>
+            <div style="min-width:80px;text-align:center;">
+              <div id="slide-count-display" style="font-size:24px;font-weight:900;color:var(--ruby);line-height:1;"></div>
+              <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:2px;">SLIDES</div>
+            </div>
+            <button onclick="adjustSlideCount(1)" style="width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ruby);">+</button>
+          </div>
+          <div id="slide-count-hint" style="font-size:12px;color:var(--text-muted);font-weight:600;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button id="generate-btn" class="btn btn-primary" onclick="generateDeck()">✨ Generate Deck</button>
+        <div id="gen-limit-warning" style="font-size:12px;color:#DC2626;font-weight:600;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Deck viewer -->
+    <div id="deck-viewer" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div>
+          <span id="deck-slide-count" style="font-size:13px;font-weight:700;color:var(--text);"></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-secondary" onclick="prevSlide()">← Prev</button>
+          <button class="btn btn-sm btn-secondary" onclick="nextSlide()">Next →</button>
+          <button class="btn btn-sm btn-primary" onclick="saveDeck()">💾 Save Deck</button>
+        </div>
+      </div>
+
+      <div class="deck-layout" style="display:grid;grid-template-columns:180px 1fr;gap:20px;">
+        <!-- Thumbnails -->
+        <div class="thumb-col" style="display:flex;flex-direction:column;gap:8px;" id="thumb-col"></div>
+
+        <!-- Active slide + editor -->
+        <div>
+          <div id="slide-display" class="slide-wrap" style="margin-bottom:14px;"></div>
+
+          <!-- Edit toolbar -->
+          <div class="edit-toolbar">
+            <span style="font-size:12px;font-weight:700;color:var(--text-mid);">✏️ Edit Slide:</span>
+            <button class="btn btn-sm btn-secondary" onclick="editSlideText()">Edit Text</button>
+            <button class="btn btn-sm btn-secondary" onclick="changeSlideColor()">🎨 BG Color</button>
+            <button class="btn btn-sm btn-secondary" onclick="addPhotoToSlide()">📷 Add Photo</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSlide()">🗑 Delete Slide</button>
+            <button class="btn btn-sm btn-secondary" onclick="addNewSlide()">+ Add Slide</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="builder-loading" style="display:none;text-align:center;padding:64px 20px;background:#fff;border-radius:20px;border:1px solid var(--border);">
+      <div style="font-size:48px;margin-bottom:16px;animation:bounce 1s ease infinite;">🎨</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:6px;">Building your deck...</div>
+      <div style="font-size:13px;color:var(--text-muted);">Claude is writing slides tailored to your business</div>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="view-admin" style="display:none;max-width:1100px;margin:0 auto;padding:32px 24px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <button class="btn btn-sm btn-secondary" onclick="showDashboard()">← Back</button>
+      <h2 style="font-size:20px;font-weight:900;">⚙️ Admin Panel</h2>
+      <span class="badge badge-blue">Admin Access</span>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;" id="admin-stats"></div>
+
+    <!-- Users table -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-weight:900;font-size:16px;">All Users</div>
+        <input class="field" style="width:220px;" placeholder="🔍 Search users..." oninput="filterAdminUsers(this.value)"/>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="admin-table" id="admin-user-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Decks</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-user-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════ -->
+
+<!-- Edit Text Modal -->
+<div id="modal-edit-text" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-edit-text')">
+  <div class="modal-box">
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--ruby-pale);display:flex;align-items:center;justify-content:center;font-size:18px;">✏️</div>
+        <h3 style="font-weight:900;font-size:18px;">Edit Slide Text</h3>
+      </div>
+      <div id="edit-text-fields"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="btn btn-primary" onclick="saveSlideEdits()">Save Changes ✓</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-edit-text')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Photo to Slide Modal -->
+<div id="modal-add-photo" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-add-photo')">
+  <div class="modal-box">
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--ruby-pale);display:flex;align-items:center;justify-content:center;font-size:18px;">📷</div>
+        <h3 style="font-weight:900;font-size:18px;">Add Photo to Slide</h3>
+      </div>
+      <div id="photo-picker-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;max-height:320px;overflow-y:auto;"></div>
+      <div class="upload-zone" style="padding:20px;" onclick="document.getElementById('slide-photo-input').click()">
+        <div style="font-size:20px;margin-bottom:6px;">➕</div>
+        <div style="font-size:13px;font-weight:700;">Upload New Photo</div>
+      </div>
+      <input type="file" id="slide-photo-input" accept="image/*" style="display:none;" onchange="uploadAndAddToSlide(event)"/>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-add-photo')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Change BG Color Modal -->
+<div id="modal-bg-color" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-bg-color')">
+  <div class="modal-box">
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <h3 style="font-weight:900;font-size:18px;margin-bottom:16px;">🎨 Slide Background</h3>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;" id="color-swatches"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <label style="font-size:13px;font-weight:700;">Custom:</label>
+        <input type="color" id="custom-color-pick" style="width:48px;height:36px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;" onchange="applyCustomColor(this.value)"/>
+      </div>
+      <button class="btn btn-secondary" onclick="closeModal('modal-bg-color')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════ -->
+<script>
+// ─── Constants ──────────────────────────────────────────────────
+const PLANS = {
+  starter:  { name:'Starter',  price:'$9.99/mo',  slides:6,  limit:3,  windowHrs:48, color:'#D41535', badge:'badge-ruby' },
+  standard: { name:'Standard', price:'$15.99/mo', slides:12, limit:5,  windowHrs:48, color:'#F59E0B', badge:'badge-gold' },
+  premium:  { name:'Premium',  price:'$24.99/mo', slides:18, limit:8,  windowHrs:48, color:'#7C3AED', badge:'badge-blue' },
+  admin:    { name:'Admin',    price:'Free',       slides:99, limit:999,windowHrs:1,  color:'#0EA5E9', badge:'badge-blue' },
+};
+
+const BG_PRESETS = [
+  {label:'Ruby Red',    bg:'linear-gradient(135deg,#D41535,#FF4D6A)'},
+  {label:'White',       bg:'#FFFFFF'},
+  {label:'Cream',       bg:'linear-gradient(135deg,#FFF8F2,#FFF0F3)'},
+  {label:'Deep Ruby',   bg:'linear-gradient(135deg,#8B0D1F,#D41535)'},
+  {label:'Sky Blue',    bg:'linear-gradient(135deg,#3B82F6,#60A5FA)'},
+  {label:'Forest',      bg:'linear-gradient(135deg,#15803D,#22C55E)'},
+  {label:'Midnight',    bg:'linear-gradient(135deg,#0F172A,#1E293B)'},
+  {label:'Gold',        bg:'linear-gradient(135deg,#92400E,#F59E0B)'},
+  {label:'Purple',      bg:'linear-gradient(135deg,#4C1D95,#7C3AED)'},
+  {label:'Teal',        bg:'linear-gradient(135deg,#0F766E,#14B8A6)'},
+  {label:'Rose',        bg:'linear-gradient(135deg,#BE185D,#EC4899)'},
+  {label:'Warm Gray',   bg:'linear-gradient(135deg,#78716C,#A8A29E)'},
+];
+
+const ADMIN_EMAIL = 'gideon@rubywall.com';
+const ADMIN_PASS  = 'Einstein_Apollo';
+
+// ─── State ──────────────────────────────────────────────────────
+let DB = JSON.parse(localStorage.getItem('deckaiDB') || '{"users":{},"presentations":{}}');
+let currentUser = null;
+let currentSlides = [];
+let activeSlideIdx = 0;
+let uploadedPhotos = []; // base64 photos
+let editingSlideData = {};
+
+function saveDB(){ localStorage.setItem('deckaiDB', JSON.stringify(DB)); }
+
+// ─── Auth ────────────────────────────────────────────────────────
+function switchAuthTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('auth-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('auth-register').style.display = tab==='register'?'block':'none';
+}
+
+function selectPlan(p){
+  ['starter','standard','premium'].forEach(id=>{
+    const el = document.getElementById('plan-'+id);
+    el.style.borderColor = id===p ? 'var(--ruby)' : 'var(--border)';
+    el.style.background = id===p ? 'var(--ruby-pale2)' : '#fff';
+  });
+}
+selectPlan('starter');
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-pass').value;
+  if(!email||!pass){ toast('Please fill in all fields','error'); return; }
+
+  // Admin check
+  if(email===ADMIN_EMAIL && pass===ADMIN_PASS){
+    currentUser = { id:'admin', name:'Gideon (Admin)', email:ADMIN_EMAIL, plan:'admin', created:Date.now() };
+    enterApp();
+    return;
+  }
+
+  const user = DB.users[email];
+  if(!user || user.password!==btoa(pass)){ toast('Invalid email or password','error'); return; }
+  currentUser = {...user};
+  enterApp();
+}
+
+function doRegister(){
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('reg-pass').value;
+  const plan  = document.querySelector('input[name="plan"]:checked').value;
+  if(!name||!email||!pass){ toast('Please fill in all fields','error'); return; }
+  if(pass.length<6){ toast('Password must be at least 6 characters','error'); return; }
+  if(DB.users[email]){ toast('An account with this email already exists','error'); return; }
+
+  const user = { id: 'u_'+Date.now(), name, email, plan, password: btoa(pass), created: Date.now(), presentations:[], usage:[] };
+  DB.users[email] = user;
+  saveDB();
+  toast('Account created! Welcome to DeckAI 🎉','success');
+  currentUser = {...user};
+  enterApp();
+}
+
+function doLogout(){
+  currentUser = null;
+  uploadedPhotos = [];
+  currentSlides = [];
+  showScreen('auth');
+}
+
+function enterApp(){
+  showScreen('app');
+  document.getElementById('admin-btn').style.display = currentUser.plan==='admin' ? 'flex':'none';
+  updateHeaderBadge();
+  showDashboard();
+}
+
+// ─── Navigation ──────────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+function showView(id){
+  ['dashboard','builder','admin'].forEach(v=>{
+    document.getElementById('view-'+v).style.display = v===id?'block':'none';
+  });
+}
+function showDashboard(){ showView('dashboard'); renderDashboard(); }
+function showBuilder(){ 
+  if(!canMakePresentation()){ return; }
+  showView('builder');
+  document.getElementById('deck-viewer').style.display='none';
+  document.getElementById('builder-loading').style.display='none';
+  document.getElementById('builder-prompt').value='';
+  uploadedPhotos=[];
+  document.getElementById('uploaded-photos').innerHTML='';
+  currentSlides=[];
+  initSlideCountStepper();
+}
+
+// ─── Slide Count Stepper ─────────────────────────────────────────
+let selectedSlideCount = 6;
+
+function initSlideCountStepper(){
+  const plan = PLANS[currentUser.plan];
+  selectedSlideCount = plan.slides; // default to plan max
+  updateSlideCountUI();
+}
+
+function adjustSlideCount(delta){
+  const plan = PLANS[currentUser.plan];
+  const min = 1;
+  const max = plan.slides;
+  selectedSlideCount = Math.min(max, Math.max(min, selectedSlideCount + delta));
+  updateSlideCountUI();
+}
+
+function updateSlideCountUI(){
+  const plan = PLANS[currentUser.plan];
+  document.getElementById('slide-count-display').textContent = selectedSlideCount;
+  document.getElementById('slide-count-hint').textContent =
+    currentUser.plan === 'admin'
+      ? `Max: unlimited (Admin)`
+      : `Min: 1 · Max: ${plan.slides} (your ${plan.name} plan)`;
+}
+function showAdmin(){ showView('admin'); renderAdmin(); }
+
+// ─── Usage / Limits ──────────────────────────────────────────────
+function getUsageWindow(){
+  if(!currentUser || currentUser.plan==='admin') return { used:0, limit:999 };
+  const plan = PLANS[currentUser.plan];
+  const windowMs = plan.windowHrs * 3600000;
+  const now = Date.now();
+  const user = DB.users[currentUser.email];
+  const recentUsage = (user.usage||[]).filter(ts => now - ts < windowMs);
+  return { used: recentUsage.length, limit: plan.limit, windowHrs: plan.windowHrs };
+}
+
+function canMakePresentation(){
+  if(currentUser.plan==='admin') return true;
+  const {used, limit, windowHrs} = getUsageWindow();
+  if(used >= limit){
+    toast(`You've reached your ${limit} presentation limit per ${windowHrs}hrs. Upgrade your plan for more!`,'error');
+    return false;
+  }
+  return true;
+}
+
+function recordUsage(){
+  if(currentUser.plan==='admin') return;
+  const user = DB.users[currentUser.email];
+  if(!user.usage) user.usage=[];
+  user.usage.push(Date.now());
+  saveDB();
+}
+
+function updateHeaderBadge(){
+  const plan = PLANS[currentUser.plan];
+  const badge = document.getElementById('header-plan-badge');
+  badge.className = 'badge '+plan.badge;
+  badge.textContent = (currentUser.plan==='admin'?'⚙️ ':'') + plan.name;
+
+  if(currentUser.plan!=='admin'){
+    const {used,limit} = getUsageWindow();
+    document.getElementById('header-limit-info').textContent = `${used}/${limit} decks used`;
+  }
+}
+
+// ─── Dashboard ───────────────────────────────────────────────────
+function renderDashboard(){
+  updateHeaderBadge();
+  const plan = PLANS[currentUser.plan];
+  document.getElementById('dash-greeting').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}! 👋`;
+  document.getElementById('dash-sub').textContent = `${plan.name} Plan · ${plan.slides} slides per deck · ${plan.price}`;
+
+  // Usage bar
+  const {used,limit,windowHrs} = getUsageWindow();
+  const pct = currentUser.plan==='admin' ? 0 : Math.round((used/limit)*100);
+  document.getElementById('usage-fill').style.width = pct+'%';
+  document.getElementById('usage-text').textContent = currentUser.plan==='admin'
+    ? 'Unlimited presentations (Admin)'
+    : `${used} of ${limit} presentations used in the last ${windowHrs} hours`;
+  document.getElementById('usage-fill').style.background = pct>80
+    ? 'linear-gradient(90deg,#DC2626,#EF4444)'
+    : 'linear-gradient(90deg,var(--ruby),var(--ruby-light))';
+
+  // Presentations
+  const allPres = Object.values(DB.presentations||{}).filter(p=> p.ownerId===currentUser.id || currentUser.plan==='admin');
+  const grid = document.getElementById('pres-grid');
+  document.getElementById('pres-empty').style.display = allPres.length===0 ? 'block':'none';
+
+  // Clear old cards
+  grid.querySelectorAll('.pres-card').forEach(c=>c.remove());
+
+  allPres.sort((a,b)=>b.created-a.created).forEach(p=>{
+    const card = document.createElement('div');
+    card.className='pres-card fade-in';
+    card.innerHTML=`
+      <div style="font-size:28px;margin-bottom:8px;">${p.slides[0]?.accent||'🎯'}</div>
+      <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${p.title||'Untitled Deck'}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">${p.slides.length} slides · ${new Date(p.created).toLocaleDateString()}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-primary" onclick="openPresentation('${p.id}')">Open →</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePresentation('${p.id}')">🗑</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function openPresentation(id){
+  const pres = DB.presentations[id];
+  if(!pres){ toast('Presentation not found','error'); return; }
+  currentSlides = JSON.parse(JSON.stringify(pres.slides));
+  activeSlideIdx = 0;
+  showView('builder');
+  document.getElementById('builder-prompt').value = pres.prompt||'';
+  document.getElementById('builder-loading').style.display='none';
+  showDeckViewer();
+}
+
+function deletePresentation(id){
+  if(!confirm('Delete this presentation?')) return;
+  delete DB.presentations[id];
+  saveDB();
+  renderDashboard();
+  toast('Presentation deleted');
+}
+
+// ─── Generator ───────────────────────────────────────────────────
+const SYSTEM_PROMPT = (slideCount) => `You are a professional presentation designer. Generate a compelling slide deck in JSON format.
+
+Return ONLY a valid JSON array of exactly ${slideCount} slide objects. No markdown, no backticks. Raw JSON only.
+
+Each slide:
+- "type": one of "title","intro","points","quote","cta","blank"
+- "headline": max 8 words
+- "subheadline": max 12 words (only title/cta)
+- "body": 1-2 sentences (skip for title)
+- "points": array of 3-4 bullets max 6 words each (only points type)
+- "accent": single relevant emoji
+- "bg": one of "ruby","white","cream","dark"
+- "textColor": "#FFFFFF" or "#1A0A0D"
+- "photo": null
+
+Distribute slide types naturally across all ${slideCount} slides (title first, cta last, mix intro/points/quote in between).`;
+
+async function generateDeck(){
+  const prompt = document.getElementById('builder-prompt').value.trim();
+  if(!prompt){ toast('Please describe your presentation first','error'); return; }
+  if(!canMakePresentation()) return;
+
+  const slideCount = selectedSlideCount || PLANS[currentUser.plan].slides;
+
+  document.getElementById('builder-loading').style.display='block';
+  document.getElementById('deck-viewer').style.display='none';
+  document.getElementById('generate-btn').disabled=true;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:4000,
+        system: SYSTEM_PROMPT(slideCount),
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.find(b=>b.type==='text')?.text||'[]';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    currentSlides = parsed.map((s,i)=>({...s,id:'s_'+i+'_'+Date.now()}));
+    activeSlideIdx=0;
+    recordUsage();
+    updateHeaderBadge();
+    showDeckViewer();
+    toast('Deck generated! 🎉','success');
+  }catch(e){
+    toast('Generation failed — please try again','error');
+    console.error(e);
+  }finally{
+    document.getElementById('builder-loading').style.display='none';
+    document.getElementById('generate-btn').disabled=false;
+  }
+}
+
+// ─── Deck Viewer ─────────────────────────────────────────────────
+function showDeckViewer(){
+  document.getElementById('deck-viewer').style.display='block';
+  renderThumbs();
+  renderActiveSlide();
+  document.getElementById('deck-slide-count').textContent = `${currentSlides.length} Slides Ready 🎉`;
+}
+
+function renderActiveSlide(){
+  const slide = currentSlides[activeSlideIdx];
+  if(!slide) return;
+  document.getElementById('slide-display').innerHTML = buildSlideHTML(slide,false);
+}
+
+function renderThumbs(){
+  const col = document.getElementById('thumb-col');
+  col.innerHTML='';
+  currentSlides.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className='slide-thumbnail'+(i===activeSlideIdx?' active':'');
+    div.style.cssText='border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid '+(i===activeSlideIdx?'var(--ruby)':'var(--border)')+';transition:all .2s;aspect-ratio:16/9;position:relative;box-shadow:'+(i===activeSlideIdx?'0 4px 16px rgba(212,21,53,0.25)':'0 2px 8px rgba(0,0,0,0.06)')+';transform:'+(i===activeSlideIdx?'scale(1.02)':'scale(1)')+';';
+    div.innerHTML = buildSlideHTML(s,true);
+    div.onclick=()=>{ activeSlideIdx=i; renderThumbs(); renderActiveSlide(); };
+    col.appendChild(div);
+  });
+}
+
+function buildSlideHTML(slide, isThumbnail){
+  const scale = isThumbnail ? 0.38 : 1;
+  const isLight = slide.bg==='white'||slide.bg==='cream';
+  const headlineColor = slide.textColor || (isLight?'#1A0A0D':'#FFFFFF');
+  const bodyColor = isLight?'#6B3A44':'rgba(255,255,255,0.85)';
+  const mutedColor = isLight?'rgba(212,21,53,0.5)':'rgba(255,255,255,0.5)';
+  const accentColor = isLight?'#D41535':'#FFD6DC';
+
+  const bgs = {
+    ruby:  'linear-gradient(135deg,#D41535 0%,#FF4D6A 100%)',
+    white: 'linear-gradient(135deg,#FFFFFF 0%,#FFF4F6 100%)',
+    cream: 'linear-gradient(135deg,#FFF8F9 0%,#FFF0F3 100%)',
+    dark:  'linear-gradient(135deg,#1A0A0D 0%,#2D1018 100%)',
+  };
+  const bgStyle = slide.customBg || bgs[slide.bg] || bgs.ruby;
+
+  const centered = slide.type==='title'||slide.type==='cta';
+  const fs = isThumbnail ? `font-size:${scale}em;` : '';
+
+  let content='';
+
+  if(slide.type==='title'){
+    content=`
+      <div style="text-align:center;z-index:1;max-width:85%;${isThumbnail?'padding:8px;':''}">
+        <div style="font-size:${isThumbnail?'1.8em':'3.2em'};margin-bottom:${isThumbnail?'4px':'10px'};">${slide.accent||'🎯'}</div>
+        <h1 style="color:${headlineColor};font-size:${isThumbnail?'0.9em':'2.2em'};font-weight:900;line-height:1.1;margin-bottom:${isThumbnail?'4px':'12px'};font-family:'Nunito',sans-serif;">${slide.headline||''}</h1>
+        ${slide.subheadline?`<p style="color:${bodyColor};font-size:${isThumbnail?'0.55em':'1.1em'};font-weight:600;margin:0;">${slide.subheadline}</p>`:''}
+      </div>`;
+  } else if(slide.type==='intro'){
+    content=`
+      <div style="z-index:1;max-width:70%;${isThumbnail?'padding:8px;':''}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${isThumbnail?'6px':'16px'};">
+          <div style="width:${isThumbnail?'16px':'36px'};height:${isThumbnail?'16px':'36px'};border-radius:${isThumbnail?'5px':'10px'};background:rgba(212,21,53,0.12);display:flex;align-items:center;justify-content:center;font-size:${isThumbnail?'0.7em':'1.4em'};">${slide.accent||'👋'}</div>
+          <div style="width:3px;height:${isThumbnail?'16px':'28px'};background:#D41535;border-radius:2px;"></div>
+        </div>
+        <h2 style="color:${headlineColor};font-size:${isThumbnail?'0.7em':'1.6em'};font-weight:800;margin-bottom:${isThumbnail?'4px':'12px'};line-height:1.2;font-family:'Nunito',sans-serif;">${slide.headline||''}</h2>
+        <p style="color:${bodyColor};font-size:${isThumbnail?'0.5em':'0.85em'};line-height:1.6;margin:0;">${slide.body||''}</p>
+      </div>`;
+  } else if(slide.type==='points'){
+    const pts = (slide.points||[]).map((p,i)=>`
+      <div style="display:flex;align-items:center;gap:${isThumbnail?'4px':'10px'};background:${isLight?'rgba(212,21,53,0.06)':'rgba(255,255,255,0.1)'};border-radius:${isThumbnail?'4px':'8px'};padding:${isThumbnail?'3px 5px':'9px 12px'};margin-bottom:${isThumbnail?'3px':'8px'};">
+        <div style="width:${isThumbnail?'12px':'22px'};height:${isThumbnail?'12px':'22px'};border-radius:5px;background:linear-gradient(135deg,#D41535,#FF4D6A);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="color:#fff;font-size:${isThumbnail?'0.4em':'0.65em'};font-family:'DM Mono',monospace;font-weight:700;">${String(i+1).padStart(2,'0')}</span>
+        </div>
+        <span style="color:${headlineColor};font-size:${isThumbnail?'0.45em':'0.85em'};font-weight:600;">${p}</span>
+      </div>`).join('');
+    content=`
+      <div style="z-index:1;width:100%;${isThumbnail?'padding:8px;':''}">
+        <div style="color:#D41535;font-size:${isThumbnail?'0.45em':'0.65em'};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.15em;font-weight:700;margin-bottom:${isThumbnail?'4px':'8px'};">${slide.accent||''} ${slide.headline||''}</div>
+        <div style="width:${isThumbnail?'20px':'40px'};height:2px;background:linear-gradient(90deg,#D41535,transparent);border-radius:2px;margin-bottom:${isThumbnail?'6px':'14px'};"></div>
+        ${pts}
+      </div>`;
+  } else if(slide.type==='quote'){
+    content=`
+      <div style="z-index:1;max-width:75%;${isThumbnail?'padding:8px;':''}">
+        <div style="font-size:${isThumbnail?'1.2em':'3em'};color:rgba(212,21,53,0.15);font-family:Georgia,serif;line-height:1;margin-bottom:${isThumbnail?'4px':'12px'};">"</div>
+        <p style="color:${headlineColor};font-size:${isThumbnail?'0.55em':'1.2em'};font-style:italic;font-weight:700;line-height:1.5;margin-bottom:${isThumbnail?'6px':'16px'};">"${slide.body||''}"</p>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:${isThumbnail?'16px':'28px'};height:2px;background:linear-gradient(90deg,#D41535,#FF4D6A);border-radius:2px;"></div>
+          <span style="color:#D41535;font-size:${isThumbnail?'0.4em':'0.65em'};font-family:'DM Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">${slide.headline||''}</span>
+        </div>
+      </div>`;
+  } else if(slide.type==='cta'){
+    content=`
+      <div style="text-align:center;z-index:1;max-width:80%;${isThumbnail?'padding:8px;':''}">
+        <div style="font-size:${isThumbnail?'1.8em':'3em'};margin-bottom:${isThumbnail?'4px':'10px'};">${slide.accent||'🚀'}</div>
+        <h2 style="color:${headlineColor};font-size:${isThumbnail?'0.9em':'2em'};font-weight:900;margin-bottom:${isThumbnail?'4px':'12px'};line-height:1.1;font-family:'Nunito',sans-serif;">${slide.headline||''}</h2>
+        ${slide.subheadline?`<p style="color:${bodyColor};font-size:${isThumbnail?'0.5em':'1em'};margin-bottom:${isThumbnail?'6px':'16px'};font-weight:600;">${slide.subheadline}</p>`:''}
+        <div style="display:inline-block;background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.35);color:#fff;padding:${isThumbnail?'3px 8px':'8px 20px'};border-radius:24px;font-size:${isThumbnail?'0.4em':'0.75em'};font-family:'DM Mono',monospace;letter-spacing:0.12em;">rubywall.com</div>
+      </div>`;
+  } else {
+    content=`<div style="z-index:1;color:${headlineColor};opacity:0.5;font-size:${isThumbnail?'0.6em':'1em'};">Blank Slide</div>`;
+  }
+
+  // Photo overlay
+  const photoHtml = slide.photo
+    ? `<img src="${slide.photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.25;border-radius:inherit;"/>`
+    : '';
+
+  // Dot grid decor
+  const dotColor = isLight?'rgba(212,21,53,0.06)':'rgba(255,255,255,0.08)';
+  const decor = `<div style="position:absolute;inset:0;background-image:radial-gradient(circle,${dotColor} 1.5px,transparent 1.5px);background-size:24px 24px;pointer-events:none;border-radius:inherit;"></div>`;
+
+  // Watermark
+  const wm = `
+    <div style="position:absolute;bottom:${isThumbnail?'4px':'14px'};left:${isThumbnail?'6px':'20px'};font-size:${isThumbnail?'0.35em':'0.55em'};font-family:'DM Mono',monospace;letter-spacing:0.15em;text-transform:uppercase;color:${isLight?'rgba(212,21,53,0.3)':'rgba(255,255,255,0.35)'};z-index:2;">Ruby Wall · DeckAI</div>
+    <div style="position:absolute;bottom:${isThumbnail?'4px':'14px'};right:${isThumbnail?'6px':'20px'};font-size:${isThumbnail?'0.35em':'0.55em'};font-family:'DM Mono',monospace;letter-spacing:0.12em;color:${isLight?'rgba(212,21,53,0.3)':'rgba(255,255,255,0.35)'};z-index:2;">${String(currentSlides.indexOf(slide)+1).padStart(2,'0')} / ${String(currentSlides.length).padStart(2,'0')}</div>`;
+
+  return `<div style="width:100%;height:100%;background:${bgStyle};display:flex;align-items:${centered?'center':'flex-start'};justify-content:${centered?'center':'flex-start'};padding:${isThumbnail?'12px':'44px 52px'};position:relative;overflow:hidden;">
+    ${decor}${photoHtml}${content}${wm}
+  </div>`;
+}
+
+function prevSlide(){ if(activeSlideIdx>0){activeSlideIdx--;renderThumbs();renderActiveSlide();} }
+function nextSlide(){ if(activeSlideIdx<currentSlides.length-1){activeSlideIdx++;renderThumbs();renderActiveSlide();} }
+
+// ─── Editing ─────────────────────────────────────────────────────
+function editSlideText(){
+  const slide = currentSlides[activeSlideIdx];
+  const fields = document.getElementById('edit-text-fields');
+  fields.innerHTML='';
+
+  const add = (key,label,multi=false,val='')=>{
+    const v = slide[key]!==undefined ? slide[key] : val;
+    fields.innerHTML+=`
+      <div class="field-group">
+        <label class="field-label">${label}</label>
+        ${multi
+          ? `<textarea id="ef-${key}" class="field" rows="3" style="resize:none;">${v||''}</textarea>`
+          : `<input id="ef-${key}" class="field" type="text" value="${(v||'').replace(/"/g,'&quot;')}"/>`}
+      </div>`;
+  };
+
+  add('headline','Headline');
+  if(slide.type==='title'||slide.type==='cta') add('subheadline','Subheadline');
+  if(slide.type!=='title') add('body','Body Text',true);
+  if(slide.type==='points' && slide.points){
+    slide.points.forEach((p,i)=>{
+      fields.innerHTML+=`<div class="field-group"><label class="field-label">Bullet ${i+1}</label><input id="ef-pt-${i}" class="field" type="text" value="${p.replace(/"/g,'&quot;')}"/></div>`;
+    });
+  }
+  add('accent','Emoji Accent');
+  openModal('modal-edit-text');
+}
+
+function saveSlideEdits(){
+  const slide = currentSlides[activeSlideIdx];
+  ['headline','subheadline','body','accent'].forEach(k=>{
+    const el=document.getElementById('ef-'+k);
+    if(el) slide[k]=el.value;
+  });
+  if(slide.type==='points' && slide.points){
+    slide.points = slide.points.map((_,i)=>{
+      const el=document.getElementById('ef-pt-'+i);
+      return el?el.value:_;
+    });
+  }
+  closeModal('modal-edit-text');
+  renderThumbs();
+  renderActiveSlide();
+  toast('Slide updated ✓','success');
+}
+
+function changeSlideColor(){
+  const swatches = document.getElementById('color-swatches');
+  swatches.innerHTML='';
+  BG_PRESETS.forEach(p=>{
+    const div=document.createElement('div');
+    div.style.cssText=`height:48px;border-radius:10px;cursor:pointer;background:${p.bg};border:2px solid var(--border);transition:transform .15s;`;
+    div.title=p.label;
+    div.onmouseover=()=>div.style.transform='scale(1.05)';
+    div.onmouseout=()=>div.style.transform='scale(1)';
+    div.onclick=()=>{
+      const slide=currentSlides[activeSlideIdx];
+      slide.customBg=p.bg;
+      // auto text color
+      const dark=['Midnight','Forest','Teal'].includes(p.label)||p.label.includes('Dark')||p.label.includes('Ruby');
+      slide.textColor=dark?'#FFFFFF':'#1A0A0D';
+      renderActiveSlide();renderThumbs();
+      toast(`Background set to ${p.label}`,'success');
+    };
+    swatches.appendChild(div);
+  });
+  openModal('modal-bg-color');
+}
+
+function applyCustomColor(hex){
+  const slide=currentSlides[activeSlideIdx];
+  slide.customBg=hex;
+  slide.textColor='#FFFFFF';
+  renderActiveSlide();renderThumbs();
+}
+
+function deleteSlide(){
+  if(currentSlides.length<=1){ toast("Can't delete the last slide",'error'); return; }
+  if(!confirm('Delete this slide?')) return;
+  currentSlides.splice(activeSlideIdx,1);
+  activeSlideIdx=Math.min(activeSlideIdx,currentSlides.length-1);
+  renderThumbs();renderActiveSlide();
+  document.getElementById('deck-slide-count').textContent=`${currentSlides.length} Slides`;
+  toast('Slide deleted');
+}
+
+function addNewSlide(){
+  const newSlide={
+    id:'s_new_'+Date.now(),
+    type:'blank',
+    headline:'New Slide',
+    body:'Click Edit Text to customize this slide.',
+    accent:'📄',
+    bg:'white',
+    textColor:'#1A0A0D',
+    photo:null,
+    customBg:null,
+  };
+  currentSlides.splice(activeSlideIdx+1,0,newSlide);
+  activeSlideIdx++;
+  renderThumbs();renderActiveSlide();
+  document.getElementById('deck-slide-count').textContent=`${currentSlides.length} Slides`;
+  toast('New slide added','success');
+}
+
+// ─── Photos ──────────────────────────────────────────────────────
+function handlePhotoUpload(e){
+  const files=Array.from(e.target.files);
+  files.forEach(f=>{
+    if(f.size>5242880){ toast(`${f.name} is too large (max 5MB)`,'error'); return; }
+    const r=new FileReader();
+    r.onload=ev=>{
+      uploadedPhotos.push({name:f.name,src:ev.target.result});
+      renderUploadedPhotos();
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function renderUploadedPhotos(){
+  const wrap=document.getElementById('uploaded-photos');
+  wrap.innerHTML='';
+  uploadedPhotos.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:2px solid var(--border);';
+    div.innerHTML=`<img src="${p.src}" style="width:100%;height:100%;object-fit:cover;"/>
+      <button onclick="removePhoto(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(220,38,38,0.85);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;">✕</button>`;
+    wrap.appendChild(div);
+  });
+}
+
+function removePhoto(i){ uploadedPhotos.splice(i,1); renderUploadedPhotos(); }
+
+function addPhotoToSlide(){
+  if(uploadedPhotos.length===0){ toast('Upload photos first in the prompt section','error'); return; }
+  const grid=document.getElementById('photo-picker-grid');
+  grid.innerHTML='';
+  uploadedPhotos.forEach((p,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid var(--border);transition:all .15s;';
+    div.innerHTML=`<img src="${p.src}" style="width:100%;height:100%;object-fit:cover;"/>`;
+    div.onmouseover=()=>div.style.transform='scale(1.04)';
+    div.onmouseout=()=>div.style.transform='scale(1)';
+    div.onclick=()=>{
+      currentSlides[activeSlideIdx].photo=p.src;
+      renderActiveSlide();renderThumbs();
+      closeModal('modal-add-photo');
+      toast('Photo added to slide 📷','success');
+    };
+    grid.appendChild(div);
+  });
+  openModal('modal-add-photo');
+}
+
+function uploadAndAddToSlide(e){
+  const f=e.target.files[0];
+  if(!f) return;
+  if(f.size>5242880){ toast('File too large (max 5MB)','error'); return; }
+  const r=new FileReader();
+  r.onload=ev=>{
+    const src=ev.target.result;
+    uploadedPhotos.push({name:f.name,src});
+    currentSlides[activeSlideIdx].photo=src;
+    renderActiveSlide();renderThumbs();
+    closeModal('modal-add-photo');
+    renderUploadedPhotos();
+    toast('Photo added to slide 📷','success');
+  };
+  r.readAsDataURL(f);
+}
+
+// ─── Save Deck ───────────────────────────────────────────────────
+function saveDeck(){
+  if(currentSlides.length===0){ toast('No slides to save','error'); return; }
+  const prompt=document.getElementById('builder-prompt').value.trim();
+  const id='pres_'+Date.now();
+  const pres={
+    id, ownerId:currentUser.id,
+    title:currentSlides[0].headline||'Untitled',
+    prompt, slides:JSON.parse(JSON.stringify(currentSlides)),
+    created:Date.now(),
+  };
+  if(!DB.presentations) DB.presentations={};
+  DB.presentations[id]=pres;
+  saveDB();
+  toast('Presentation saved! 💾','success');
+}
+
+// ─── Admin ───────────────────────────────────────────────────────
+function renderAdmin(){
+  const users=Object.values(DB.users||{});
+  const pres=Object.values(DB.presentations||{});
+
+  const planCounts={starter:0,standard:0,premium:0};
+  users.forEach(u=>{ if(planCounts[u.plan]!==undefined) planCounts[u.plan]++; });
+
+  document.getElementById('admin-stats').innerHTML=`
+    <div class="card tier-admin" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--ruby);">${users.length}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Total Users</div>
+    </div>
+    <div class="card tier-admin" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--ruby);">${pres.length}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Total Presentations</div>
+    </div>
+    <div class="card tier-starter" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--ruby);">${planCounts.starter}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Starter Users</div>
+    </div>
+    <div class="card tier-standard" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:var(--gold);">${planCounts.standard}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Standard Users</div>
+    </div>
+    <div class="card tier-premium" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:#7C3AED;">${planCounts.premium}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Premium Users</div>
+    </div>
+    <div class="card tier-admin" style="padding:20px;">
+      <div style="font-size:28px;font-weight:900;color:#0EA5E9;">$${((planCounts.starter*9.99)+(planCounts.standard*15.99)+(planCounts.premium*24.99)).toFixed(2)}</div>
+      <div style="font-size:13px;color:var(--text-muted);font-weight:600;margin-top:4px;">Monthly Revenue</div>
+    </div>`;
+
+  renderAdminTable(users, pres);
+}
+
+function renderAdminTable(users, pres){
+  const tbody=document.getElementById('admin-user-tbody');
+  tbody.innerHTML='';
+  users.forEach(u=>{
+    const userPres=pres.filter(p=>p.ownerId===u.id);
+    const planInfo=PLANS[u.plan]||PLANS.starter;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div style="font-weight:700;">${u.name}</div></td>
+      <td style="color:var(--text-muted);">${u.email}</td>
+      <td><span class="badge ${planInfo.badge}">${planInfo.name}</span></td>
+      <td style="font-weight:700;">${userPres.length}</td>
+      <td style="color:var(--text-muted);">${new Date(u.created).toLocaleDateString()}</td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <select onchange="adminChangePlan('${u.email}',this.value)" style="border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-size:12px;font-family:'Nunito',sans-serif;cursor:pointer;">
+            <option value="">Change plan...</option>
+            <option value="starter">Starter</option>
+            <option value="standard">Standard</option>
+            <option value="premium">Premium</option>
+          </select>
+          <button class="btn btn-sm btn-danger" onclick="adminDeleteUser('${u.email}')">Delete</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterAdminUsers(q){
+  const users=Object.values(DB.users||{}).filter(u=>
+    u.name.toLowerCase().includes(q.toLowerCase())||u.email.toLowerCase().includes(q.toLowerCase())
+  );
+  const pres=Object.values(DB.presentations||{});
+  renderAdminTable(users,pres);
+}
+
+function adminChangePlan(email,plan){
+  if(!plan) return;
+  DB.users[email].plan=plan;
+  saveDB();
+  toast(`Updated ${email} to ${PLANS[plan].name}`,'success');
+  renderAdmin();
+}
+
+function adminDeleteUser(email){
+  if(!confirm(`Delete user ${email}? This cannot be undone.`)) return;
+  delete DB.users[email];
+  saveDB();
+  toast('User deleted');
+  renderAdmin();
+}
+
+// ─── Modals ──────────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id).style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+function closeModalOutside(e,id){ if(e.target.id===id) closeModal(id); }
+
+// ─── Toast ───────────────────────────────────────────────────────
+function toast(msg, type=''){
+  const wrap=document.getElementById('toast');
+  const el=document.createElement('div');
+  el.className='toast-item'+(type?' '+type:'');
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+
+// ─── Drag & Drop upload zone ─────────────────────────────────────
+const zone=document.getElementById('upload-zone');
+if(zone){
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('dragover');
+    const files=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
+    if(files.length){
+      const inp=document.getElementById('photo-input');
+      const dt=new DataTransfer();
+      files.forEach(f=>dt.items.add(f));
+      inp.files=dt.files;
+      handlePhotoUpload({target:inp});
+    }
+  });
+}
+</script>
+</body>
+</html>
