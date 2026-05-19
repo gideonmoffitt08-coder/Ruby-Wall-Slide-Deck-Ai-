@@ -255,6 +255,7 @@ body{font-family:'Nunito',system-ui,sans-serif;background:var(--off-white);color
       <div id="header-plan-badge" class="badge badge-ruby"></div>
       <div id="header-limit-info" style="font-size:12px;color:var(--text-muted);font-weight:600;"></div>
       <button class="btn btn-sm btn-secondary" onclick="showDashboard()">📁 My Decks</button>
+      <button id="dev-key-btn" class="btn btn-sm btn-secondary" onclick="openModal('modal-api-key')" title="Dev mode: set API key" style="display:none;">🔑 Dev Key</button>
       <button id="admin-btn" class="btn btn-sm" style="display:none;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;" onclick="showAdmin()">⚙️ Admin</button>
       <button class="btn btn-sm btn-secondary" onclick="doLogout()">Sign Out</button>
     </div>
@@ -425,6 +426,31 @@ body{font-family:'Nunito',system-ui,sans-serif;background:var(--off-white);color
      MODALS
 ════════════════════════════════════════════════════ -->
 
+<!-- API Key Modal -->
+<div id="modal-api-key" style="display:none;" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--ruby-pale);display:flex;align-items:center;justify-content:center;font-size:20px;">🔑</div>
+        <h3 style="font-weight:900;font-size:18px;">Connect Your API Key</h3>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">DeckAI uses the Anthropic Claude API to generate slides. Paste your API key below — it's stored only in your browser and never sent anywhere except Anthropic's servers.</p>
+      <div class="field-group">
+        <label class="field-label">Anthropic API Key</label>
+        <input id="api-key-input" class="field" type="password" placeholder="sk-ant-api03-..."/>
+      </div>
+      <div style="background:#FEF9C3;border:1px solid #FDE68A;border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#A16207;font-weight:600;">
+        ⚠️ Get your key at <strong>console.anthropic.com</strong> → API Keys. Keep it private — never share it.
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="saveApiKey()">Save & Continue ✓</button>
+        <button class="btn btn-secondary" onclick="closeModal('modal-api-key')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Edit Text Modal -->
 <div id="modal-edit-text" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-edit-text')">
   <div class="modal-box">
@@ -485,6 +511,10 @@ body{font-family:'Nunito',system-ui,sans-serif;background:var(--off-white);color
      JAVASCRIPT
 ════════════════════════════════════════════════════ -->
 <script>
+// ─── Backend URL ─────────────────────────────────────────────────
+// After deploying to Vercel, replace this with your actual Vercel URL
+const BACKEND_URL = 'https://rubywallapi.gideonmoffitt08.workers.dev';
+
 // ─── Constants ──────────────────────────────────────────────────
 const PLANS = {
   starter:  { name:'Starter',  price:'$9.99/mo',  slides:6,  limit:3,  windowHrs:48, color:'#D41535', badge:'badge-ruby' },
@@ -520,6 +550,17 @@ let uploadedPhotos = []; // base64 photos
 let editingSlideData = {};
 
 function saveDB(){ localStorage.setItem('deckaiDB', JSON.stringify(DB)); }
+
+// ─── API Key ─────────────────────────────────────────────────────
+function saveApiKey(){
+  const key = document.getElementById('api-key-input').value.trim();
+  if(!key.startsWith('sk-ant')){ toast('That doesn\'t look like a valid Anthropic key','error'); return; }
+  localStorage.setItem('deckaiApiKey', key);
+  closeModal('modal-api-key');
+  toast('API key saved! You\'re ready to generate 🎉','success');
+  // retry generation if they came from the builder
+  if(document.getElementById('builder-prompt').value.trim()) generateDeck();
+}
 
 // ─── Auth ────────────────────────────────────────────────────────
 function switchAuthTab(tab){
@@ -583,6 +624,9 @@ function doLogout(){
 function enterApp(){
   showScreen('app');
   document.getElementById('admin-btn').style.display = currentUser.plan==='admin' ? 'flex':'none';
+  // Show dev key button only when backend URL isn't configured yet
+  const devMode = !BACKEND_URL || BACKEND_URL === 'YOUR_VERCEL_URL_HERE';
+  document.getElementById('dev-key-btn').style.display = devMode ? 'flex' : 'none';
   updateHeaderBadge();
   showDashboard();
 }
@@ -768,18 +812,50 @@ async function generateDeck(){
   document.getElementById('generate-btn').disabled=true;
 
   try{
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4000,
-        system: SYSTEM_PROMPT(slideCount),
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content?.find(b=>b.type==='text')?.text||'[]';
+    const endpoint = BACKEND_URL && BACKEND_URL !== 'YOUR_WORKER_URL_HERE'
+      ? BACKEND_URL + '/deckai'
+      : null;
+
+    let raw;
+
+    if(endpoint){
+      // Production: call your secure Vercel backend
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          slideCount,
+          systemPrompt: SYSTEM_PROMPT(slideCount)
+        })
+      });
+      const data = await res.json();
+      if(data.error){ toast('Error: '+data.error,'error'); return; }
+      raw = data.result;
+    } else {
+      // Dev/local fallback: call Anthropic directly using saved key
+      const apiKey = localStorage.getItem('deckaiApiKey')||'';
+      if(!apiKey){ openModal('modal-api-key'); return; }
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:4000,
+          system: SYSTEM_PROMPT(slideCount),
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      const data = await res.json();
+      if(data.error){ toast('API Error: '+data.error.message,'error'); return; }
+      raw = data.content?.find(b=>b.type==='text')?.text||'[]';
+    }
+
     const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
     currentSlides = parsed.map((s,i)=>({...s,id:'s_'+i+'_'+Date.now()}));
     activeSlideIdx=0;
