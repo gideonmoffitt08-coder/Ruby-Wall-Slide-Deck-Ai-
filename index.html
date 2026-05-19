@@ -1457,14 +1457,20 @@ async function analyzeAndPreviewChart(){
 
   try{
     const prompt=`${forcedChartType?`Force chart type to: ${forcedChartType}\n\n`:''}${userTitle?`User title: ${userTitle}\n\n`:''}Data to visualize:\n${rawData}`;
-    const endpoint=BACKEND_URL&&BACKEND_URL!=='YOUR_WORKER_URL_HERE'?BACKEND_URL+'/deckai':null;
+    // Use /chat route for viz — it passes body directly, no slideCount confusion
+    const endpoint=BACKEND_URL&&BACKEND_URL!=='YOUR_WORKER_URL_HERE'?BACKEND_URL+'/chat':null;
     let raw;
     if(endpoint){
       const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({prompt,slideCount:1,systemPrompt:VIZ_SYSTEM_PROMPT})});
+        body:JSON.stringify({
+          model:'claude-sonnet-4-5',
+          max_tokens:1500,
+          system:VIZ_SYSTEM_PROMPT,
+          messages:[{role:'user',content:prompt}]
+        })});
       const d=await res.json();
-      if(d.error){throw new Error(d.error);}
-      raw=d.result;
+      if(d.error){throw new Error(typeof d.error==='string'?d.error:d.error.message||'Unknown error');}
+      raw=d.content?.find(b=>b.type==='text')?.text||'{}';
     }else{
       const apiKey=localStorage.getItem('deckaiApiKey')||'';
       if(!apiKey){openModal('modal-api-key');return;}
@@ -1476,12 +1482,15 @@ async function analyzeAndPreviewChart(){
       raw=d.content?.find(b=>b.type==='text')?.text||'{}';
     }
 
-    const vizData=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const cleaned=raw.replace(/```json|```/g,'').trim();
+    const vizData=JSON.parse(cleaned);
     currentVizData=vizData;
+    // Capture image immediately after rendering while canvas is fresh
     renderChartPreview(vizData);
-    switchVizTab('preview');
+    // Small delay to let Chart.js finish drawing before we switch tabs
+    setTimeout(()=>switchVizTab('preview'),120);
   }catch(e){
-    errEl.textContent='Analysis failed: '+e.message;
+    errEl.textContent='Analysis failed: '+e.message+'. Check your data format and try again.';
     errEl.style.display='block';
   }finally{
     spinner.style.display='none';
@@ -1558,51 +1567,123 @@ function renderChartPreview(vizData){
 }
 
 function captureVizAsImage(){
-  const canvas=document.getElementById('viz-canvas');
-  const tableContainer=document.getElementById('viz-table-container');
-  if(canvas.style.display!=='none' && currentChartInstance){
-    return Promise.resolve(canvas.toDataURL('image/png'));
-  }
-  // For table/infographic — render to canvas via html2canvas alternative
-  // We'll build an SVG snapshot of the table HTML
   return new Promise(resolve=>{
+    const canvas=document.getElementById('viz-canvas');
+    const tableContainer=document.getElementById('viz-table-container');
+
+    // ── Chart.js canvas ──────────────────────────────────────────
+    if(canvas.style.display!=='none'&&currentChartInstance){
+      // Render to a fresh offscreen canvas at high resolution
+      const off=document.createElement('canvas');
+      off.width=900;off.height=500;
+      const ctx=off.getContext('2d');
+      ctx.fillStyle='#ffffff';
+      ctx.fillRect(0,0,900,500);
+      // Draw the live chart canvas into the offscreen one
+      ctx.drawImage(canvas,0,0,900,500);
+      resolve(off.toDataURL('image/png',1.0));
+      return;
+    }
+
+    // ── Table / Infographic ──────────────────────────────────────
+    // Build a standalone HTML page, load in an img via SVG foreignObject
     const html=tableContainer.innerHTML;
-    // Encode as data URL using a blob
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,sans-serif;padding:16px;background:#fff;">${html}</div>
+    const fullHtml=`<!DOCTYPE html><html><body style="margin:0;padding:16px;font-family:Inter,sans-serif;background:#fff;width:868px;">${html}</body></html>`;
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='900' height='400'>
+      <foreignObject x='0' y='0' width='900' height='400'>
+        ${fullHtml.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,"&apos;")}
       </foreignObject>
     </svg>`;
-    const blob=new Blob([svg],{type:'image/svg+xml'});
-    const url=URL.createObjectURL(blob);
-    const img=new Image();
-    const offCanvas=document.createElement('canvas');
-    offCanvas.width=640;offCanvas.height=320;
-    img.onload=()=>{
-      offCanvas.getContext('2d').drawImage(img,0,0);
-      URL.revokeObjectURL(url);
-      resolve(offCanvas.toDataURL('image/png'));
-    };
-    img.onerror=()=>resolve(null);
-    img.src=url;
+    // Simpler approach: build offscreen canvas by re-rendering the HTML as structured data
+    // For table: draw cells manually on canvas
+    if(currentVizData&&currentVizData.chartType==='table'){
+      const off=document.createElement('canvas');
+      off.width=900;off.height=400;
+      const ctx=off.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,900,400);
+      const headers=currentVizData.tableHeaders||[];
+      const rows=currentVizData.tableRows||[];
+      const colW=Math.floor(880/Math.max(headers.length,1));
+      const rowH=36;const startX=10;let startY=10;
+      // Header row
+      ctx.fillStyle='#D41535';
+      ctx.fillRect(startX,startY,880,rowH);
+      ctx.fillStyle='#fff';ctx.font='bold 13px Inter,Arial,sans-serif';
+      headers.forEach((h,i)=>{ctx.fillText(h,startX+i*colW+10,startY+23);});
+      startY+=rowH;
+      // Data rows
+      rows.forEach((row,ri)=>{
+        ctx.fillStyle=ri%2===0?'#fff':'#F7F8FC';
+        ctx.fillRect(startX,startY,880,rowH);
+        ctx.fillStyle='#1A0A0D';ctx.font='12px Inter,Arial,sans-serif';
+        row.forEach((cell,ci)=>{ctx.fillText(String(cell).substring(0,28),startX+ci*colW+10,startY+23);});
+        // Row border
+        ctx.strokeStyle='#F0E8EA';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(startX,startY+rowH);ctx.lineTo(startX+880,startY+rowH);ctx.stroke();
+        startY+=rowH;
+      });
+      resolve(off.toDataURL('image/png',1.0));
+      return;
+    }
+
+    if(currentVizData&&currentVizData.chartType==='infographic'){
+      const stats=currentVizData.infographicStats||[];
+      const off=document.createElement('canvas');
+      off.width=900;off.height=300;
+      const ctx=off.getContext('2d');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,900,300);
+      const boxW=Math.floor(860/Math.max(stats.length,1));
+      stats.forEach((s,i)=>{
+        const x=20+i*boxW;const y=40;
+        // Box
+        ctx.fillStyle='#FFF4F6';
+        ctx.beginPath();
+        ctx.roundRect(x,y,boxW-12,220,12);
+        ctx.fill();
+        ctx.strokeStyle='#F0E8EA';ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.roundRect(x,y,boxW-12,220,12);ctx.stroke();
+        // Number
+        ctx.fillStyle=s.color||'#D41535';
+        ctx.font='bold 52px Inter,Arial,sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText(s.number,x+(boxW-12)/2,y+90);
+        // Label
+        ctx.fillStyle='#6B3A44';ctx.font='13px Inter,Arial,sans-serif';
+        ctx.fillText(s.label,x+(boxW-12)/2,y+130);
+        ctx.textAlign='left';
+      });
+      resolve(off.toDataURL('image/png',1.0));
+      return;
+    }
+
+    resolve(null);
   });
 }
 
 async function insertChartToSlide(){
+  toast('Capturing chart...','');
   const imgSrc=await captureVizAsImage();
-  if(!imgSrc){toast('Could not capture chart','error');return;}
-  const slide=currentSlides[activeSlideIdx];
-  slide.chartImage=imgSrc;
-  slide.chartTitle=currentVizData.title||'';
-  slide.chartDescription=currentVizData.description||'';
-  // Save chip
+  if(!imgSrc){toast('Could not capture chart — try inserting as a new slide instead','error');return;}
+  // If no slides exist yet, create one
+  if(!currentSlides.length){
+    currentSlides.push({id:'viz_'+Date.now(),type:'chart',headline:currentVizData.title||'Data Insight',body:currentVizData.description||'',chartImage:imgSrc,chartTitle:currentVizData.title||'',chartDescription:currentVizData.description||'',photo:null,photoPlacement:null,font:selectedTemplate.font,fontScale:1});
+    activeSlideIdx=0;
+  }else{
+    const slide=currentSlides[activeSlideIdx];
+    slide.type='chart';
+    slide.chartImage=imgSrc;
+    slide.chartTitle=currentVizData.title||'';
+    slide.chartDescription=currentVizData.description||'';
+    slide.headline=slide.headline||currentVizData.title||'Data Insight';
+  }
   addVizChip(currentVizData.title||'Chart',imgSrc);
   closeModal('modal-dataviz');
-  renderThumbs();renderActiveSlide();
-  toast('Chart added to slide','success');
+  showDeckViewer();
+  toast('Chart added to slide!','success');
 }
 
 async function insertChartAsNewSlide(){
+  toast('Capturing chart...','');
   const imgSrc=await captureVizAsImage();
   if(!imgSrc){toast('Could not capture chart','error');return;}
   const newSlide={
@@ -1616,13 +1697,17 @@ async function insertChartAsNewSlide(){
     photo:null,photoPlacement:null,
     font:selectedTemplate.font,fontScale:1,
   };
-  currentSlides.splice(activeSlideIdx+1,0,newSlide);
-  activeSlideIdx++;
+  if(currentSlides.length){
+    currentSlides.splice(activeSlideIdx+1,0,newSlide);
+    activeSlideIdx++;
+  }else{
+    currentSlides.push(newSlide);
+    activeSlideIdx=0;
+  }
   addVizChip(currentVizData.title||'Chart',imgSrc);
   closeModal('modal-dataviz');
-  renderThumbs();renderActiveSlide();
-  document.getElementById('deck-slide-count').textContent=`${currentSlides.length} slides`;
-  toast('Chart slide added','success');
+  showDeckViewer();
+  toast('Chart slide added!','success');
 }
 
 function addVizChip(label,imgSrc){
