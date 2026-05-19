@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DeckAI by Ruby Wall</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;700;800&family=Montserrat:wght@400;600;700;800;900&family=Raleway:wght@400;600;700;800&family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --ruby:#D41535;--ruby-light:#FF4D6A;--ruby-pale:#FFE8EC;--ruby-pale2:#FFF4F6;
@@ -244,6 +245,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
       </div>
     </div>
 
+    <!-- Step 3: Data Viz -->
+    <div class="card" style="margin-bottom:18px;">
+      <div style="height:4px;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));border-radius:4px;margin:-24px -24px 20px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <h3 style="font-weight:800;font-size:15px;margin-bottom:2px;">3. Add Data Visualizations <span style="font-size:11px;font-weight:600;color:var(--text-muted);">— optional</span></h3>
+          <p style="color:var(--text-muted);font-size:12px;">Paste any data — numbers, stats, comparisons — Claude picks the best chart type and adds it to a slide.</p>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="openDataViz()">+ Add Chart</button>
+      </div>
+      <div id="viz-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;min-height:20px;"></div>
+    </div>
+
     <!-- Deck viewer -->
     <div id="deck-viewer" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
@@ -280,6 +294,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
             <button class="btn btn-sm btn-secondary" onclick="changeSlideColor()">Background</button>
             <button class="btn btn-sm btn-secondary" onclick="changeSlideFont()">Font</button>
             <button class="btn btn-sm btn-secondary" onclick="changeFontSize()">Text Size</button>
+            <button class="btn btn-sm btn-secondary" onclick="addChartToCurrentSlide()">Add Chart</button>
             <button class="btn btn-sm btn-secondary" onclick="addPhotoToSlide()">Add Photo</button>
             <button class="btn btn-sm btn-danger" onclick="deleteSlide()">Delete Slide</button>
             <button class="btn btn-sm btn-secondary" onclick="addNewSlide()">+ New Slide</button>
@@ -317,6 +332,78 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
 </div>
 
 <!-- ═══ MODALS ═══ -->
+
+<!-- Data Viz Modal -->
+<div id="modal-dataviz" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-dataviz')">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="modal-stripe"></div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--ruby-pale);display:flex;align-items:center;justify-content:center;font-size:18px;">&#128202;</div>
+        <h3 style="font-weight:900;font-size:17px;">Data Visualizer</h3>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">Paste your data below. Claude will analyze it and generate the most appropriate chart, table, or infographic.</p>
+
+      <!-- Tabs -->
+      <div class="tabs" style="margin-bottom:16px;">
+        <button class="tab active" onclick="switchVizTab('paste')">Paste Data</button>
+        <button class="tab" onclick="switchVizTab('preview')">Preview</button>
+        <button class="tab" onclick="switchVizTab('type')">Chart Type</button>
+      </div>
+
+      <!-- Paste tab -->
+      <div id="viz-tab-paste">
+        <div class="field-group">
+          <label class="field-label">Your Data</label>
+          <textarea id="viz-data-input" class="field" rows="6" style="resize:none;font-family:'DM Mono',monospace;font-size:12px;" placeholder="Paste anything — examples:
+
+Q1: $42,000  Q2: $58,000  Q3: $71,000  Q4: $95,000
+
+Product A: 34%  Product B: 28%  Product C: 22%  Other: 16%
+
+Month | Leads | Conversions
+Jan   | 120   | 18
+Feb   | 145   | 24
+Mar   | 190   | 41"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Chart Title (optional)</label>
+          <input id="viz-title-input" class="field" type="text" placeholder="e.g. Quarterly Revenue Growth"/>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="analyzeAndPreviewChart()">Analyze & Preview</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-dataviz')">Cancel</button>
+        </div>
+        <div id="viz-analyzing" style="display:none;margin-top:14px;display:none;align-items:center;gap:10px;">
+          <div style="width:18px;height:18px;border:2px solid var(--ruby-pale);border-top-color:var(--ruby);border-radius:50%;animation:spin .7s linear infinite;"></div>
+          <span style="font-size:12px;color:var(--text-muted);">Claude is analyzing your data...</span>
+        </div>
+        <div id="viz-error" style="display:none;margin-top:12px;color:#DC2626;font-size:12px;font-weight:600;background:#FEF2F2;padding:10px 12px;border-radius:8px;border:1px solid #FECACA;"></div>
+      </div>
+
+      <!-- Preview tab -->
+      <div id="viz-tab-preview" style="display:none;">
+        <div style="background:var(--off-white);border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid var(--border);">
+          <canvas id="viz-canvas" style="max-width:100%;max-height:300px;"></canvas>
+          <div id="viz-table-container" style="display:none;overflow-x:auto;"></div>
+        </div>
+        <div id="viz-description" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;font-style:italic;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="insertChartToSlide()">Insert into Current Slide</button>
+          <button class="btn btn-secondary" onclick="insertChartAsNewSlide()">Add as New Slide</button>
+          <button class="btn btn-secondary" onclick="switchVizTab('paste')">← Back</button>
+        </div>
+      </div>
+
+      <!-- Chart type override tab -->
+      <div id="viz-tab-type" style="display:none;">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Override Claude's automatic choice and pick your preferred chart type.</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="chart-type-grid"></div>
+        <button class="btn btn-secondary" style="margin-top:14px;" onclick="switchVizTab('paste')">Back to Data</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- API Key -->
 <div id="modal-api-key" style="display:none;" class="modal-overlay">
@@ -1042,6 +1129,23 @@ function buildSlideHTML(slide,isThumbnail){
         ${slide.body?`<div style="border-left:${hs(2)} solid ${accent}30;padding-left:${hs(20)};max-width:${hs(320)};"><p style="color:${textColor};font-size:${hs(16)};line-height:1.65;opacity:.72;">${slide.body}</p></div>`:''}
       </div>
     </div>`;
+  } else if(slide.type==='chart'){
+    const hasImg=!!slide.chartImage;
+    content=`<div style="z-index:2;width:100%;padding-left:${leftPad};">
+      <div style="display:flex;align-items:center;gap:${hs(10)};margin-bottom:${hs(8)};padding-bottom:${hs(8)};border-bottom:${hs(1.5)} solid ${accent}20;">
+        <div style="width:${hs(3)};height:${hs(18)};background:${accent};border-radius:1px;flex-shrink:0;"></div>
+        <span style="color:${accent};font-size:${hs(11)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-weight:700;">DATA</span>
+      </div>
+      <h2 style="color:${textColor};font-size:${hs(22)};font-weight:800;margin-bottom:${hs(10)};letter-spacing:-0.01em;">${slide.headline||''}</h2>
+      ${hasImg
+        ?`<div style="background:rgba(255,255,255,0.95);border-radius:${hs(8)};padding:${hs(8)};border:1px solid rgba(0,0,0,0.08);">
+             <img src="${slide.chartImage}" style="width:100%;height:auto;max-height:${hs(240)};object-fit:contain;border-radius:${hs(4)};"/>
+           </div>`
+        :`<div style="background:rgba(0,0,0,0.04);border-radius:${hs(8)};height:${hs(180)};display:flex;align-items:center;justify-content:center;border:2px dashed rgba(0,0,0,0.12);">
+             <span style="color:${textColor};opacity:.35;font-size:${hs(13)};">Chart</span>
+           </div>`}
+      ${slide.chartDescription&&!T?`<p style="color:${textColor};font-size:${hs(11)};opacity:.65;margin-top:${hs(8)};font-style:italic;">${slide.chartDescription}</p>`:''}
+    </div>`;
   } else {
     content=`<div style="z-index:2;color:${textColor};opacity:.35;font-size:${hs(13)};padding-left:${leftPad};">Click Edit Text to customize this slide</div>`;
   }
@@ -1242,6 +1346,305 @@ function saveDeck(){
   const id='pres_'+Date.now();
   DB.presentations[id]={id,ownerId:currentUser.id,title:currentSlides[0].headline||'Untitled',prompt:document.getElementById('builder-prompt').value.trim(),slides:JSON.parse(JSON.stringify(currentSlides)),templateId:selectedTemplate.id,created:Date.now()};
   saveDB();toast('Deck saved!','success');
+}
+
+// ─── Data Visualization ──────────────────────────────────────────
+let currentChartInstance = null;
+let currentVizData = null; // {type, labels, datasets, title, description}
+let forcedChartType = null;
+let pendingVizForSlide = false;
+let vizChips = []; // saved charts
+
+const CHART_TYPES = [
+  {id:'bar',      label:'Bar Chart',      icon:'▬', desc:'Compare values across categories'},
+  {id:'line',     label:'Line Chart',     icon:'╱', desc:'Show trends over time'},
+  {id:'pie',      label:'Pie Chart',      icon:'◔', desc:'Show proportions of a whole'},
+  {id:'doughnut', label:'Doughnut',       icon:'◯', desc:'Proportions with center space'},
+  {id:'table',    label:'Table',          icon:'▦', desc:'Structured rows and columns'},
+  {id:'infographic', label:'Infographic', icon:'★', desc:'Key stats with large numbers'},
+];
+
+const VIZ_SYSTEM_PROMPT = `You are a data analyst and chart designer. Analyze the data provided and return a JSON object describing the best chart or visualization for it.
+
+Return ONLY valid JSON, no markdown, no explanation.
+
+JSON structure:
+{
+  "chartType": "bar" | "line" | "pie" | "doughnut" | "table" | "infographic",
+  "title": "chart title",
+  "description": "one sentence explaining what this chart shows",
+  "labels": ["label1","label2",...],
+  "datasets": [
+    {"label":"Series name","data":[1,2,3,...],"color":"#HEX"}
+  ],
+  "tableHeaders": ["Col1","Col2",...],
+  "tableRows": [["val","val"],["val","val"],...],
+  "infographicStats": [
+    {"number":"42%","label":"Stat label","color":"#HEX"}
+  ]
+}
+
+Rules:
+- Use "bar" for comparisons between named categories
+- Use "line" for time-series or sequential data
+- Use "pie" or "doughnut" for percentages that sum to ~100%
+- Use "table" for multi-column structured data
+- Use "infographic" for 2-5 key standalone metrics/stats
+- Colors should be professional: use variations of #D41535, #1D4ED8, #16A34A, #F59E0B, #7C3AED, #0891B2
+- Keep labels short (max 3 words each)
+- Only include fields relevant to the chosen chartType`;
+
+function openDataViz(){
+  switchVizTab('paste');
+  forcedChartType=null;
+  document.getElementById('viz-data-input').value='';
+  document.getElementById('viz-title-input').value='';
+  document.getElementById('viz-error').style.display='none';
+  pendingVizForSlide=false;
+  openModal('modal-dataviz');
+}
+
+function addChartToCurrentSlide(){
+  pendingVizForSlide=true;
+  openDataViz();
+}
+
+function switchVizTab(tab){
+  ['paste','preview','type'].forEach(t=>{
+    document.getElementById('viz-tab-'+t).style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#modal-dataviz .tab').forEach((el,i)=>{
+    const tabs=['paste','preview','type'];
+    el.classList.toggle('active',tabs[i]===tab);
+  });
+  if(tab==='type') renderChartTypeGrid();
+}
+
+function renderChartTypeGrid(){
+  const grid=document.getElementById('chart-type-grid');
+  grid.innerHTML='';
+  CHART_TYPES.forEach(ct=>{
+    const div=document.createElement('div');
+    const selected=forcedChartType===ct.id;
+    div.className='photo-placement-btn';
+    div.style.background=selected?'var(--ruby-pale2)':'';
+    div.style.borderColor=selected?'var(--ruby)':'';
+    div.innerHTML=`<div style="font-size:22px;margin-bottom:4px;">${ct.icon}</div>
+      <div style="font-size:11px;font-weight:800;">${ct.label}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${ct.desc}</div>`;
+    div.onclick=()=>{
+      forcedChartType=ct.id;
+      toast('Chart type set to '+ct.label,'success');
+      switchVizTab('paste');
+    };
+    grid.appendChild(div);
+  });
+}
+
+async function analyzeAndPreviewChart(){
+  const rawData=document.getElementById('viz-data-input').value.trim();
+  const userTitle=document.getElementById('viz-title-input').value.trim();
+  if(!rawData){toast('Please paste some data first','error');return;}
+
+  const analyzeBtn=document.querySelector('#viz-tab-paste .btn-primary');
+  const errEl=document.getElementById('viz-error');
+  errEl.style.display='none';
+  if(analyzeBtn) analyzeBtn.disabled=true;
+
+  // Show spinner inline
+  const spinner=document.getElementById('viz-analyzing');
+  spinner.style.display='flex';
+
+  try{
+    const prompt=`${forcedChartType?`Force chart type to: ${forcedChartType}\n\n`:''}${userTitle?`User title: ${userTitle}\n\n`:''}Data to visualize:\n${rawData}`;
+    const endpoint=BACKEND_URL&&BACKEND_URL!=='YOUR_WORKER_URL_HERE'?BACKEND_URL+'/deckai':null;
+    let raw;
+    if(endpoint){
+      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({prompt,slideCount:1,systemPrompt:VIZ_SYSTEM_PROMPT})});
+      const d=await res.json();
+      if(d.error){throw new Error(d.error);}
+      raw=d.result;
+    }else{
+      const apiKey=localStorage.getItem('deckaiApiKey')||'';
+      if(!apiKey){openModal('modal-api-key');return;}
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1500,system:VIZ_SYSTEM_PROMPT,messages:[{role:'user',content:prompt}]})});
+      const d=await res.json();
+      if(d.error){throw new Error(d.error.message);}
+      raw=d.content?.find(b=>b.type==='text')?.text||'{}';
+    }
+
+    const vizData=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    currentVizData=vizData;
+    renderChartPreview(vizData);
+    switchVizTab('preview');
+  }catch(e){
+    errEl.textContent='Analysis failed: '+e.message;
+    errEl.style.display='block';
+  }finally{
+    spinner.style.display='none';
+    if(analyzeBtn) analyzeBtn.disabled=false;
+  }
+}
+
+function renderChartPreview(vizData){
+  const canvas=document.getElementById('viz-canvas');
+  const tableContainer=document.getElementById('viz-table-container');
+  const descEl=document.getElementById('viz-description');
+  descEl.textContent=vizData.description||'';
+
+  // Destroy previous chart
+  if(currentChartInstance){currentChartInstance.destroy();currentChartInstance=null;}
+  canvas.style.display='none';
+  tableContainer.style.display='none';
+
+  if(vizData.chartType==='table'){
+    tableContainer.style.display='block';
+    const headers=(vizData.tableHeaders||[]).map(h=>`<th style="padding:8px 12px;background:var(--ruby);color:#fff;font-size:12px;font-weight:700;text-align:left;white-space:nowrap;">${h}</th>`).join('');
+    const rows=(vizData.tableRows||[]).map((row,i)=>{
+      const cells=row.map(c=>`<td style="padding:8px 12px;font-size:12px;border-bottom:1px solid var(--border);">${c}</td>`).join('');
+      return `<tr style="background:${i%2===0?'#fff':'var(--off-white)'};">${cells}</tr>`;
+    }).join('');
+    tableContainer.innerHTML=`<table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+      <thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`;
+  } else if(vizData.chartType==='infographic'){
+    tableContainer.style.display='block';
+    const stats=(vizData.infographicStats||[]).map(s=>`
+      <div style="text-align:center;padding:16px;background:#fff;border-radius:12px;border:1px solid var(--border);">
+        <div style="font-size:32px;font-weight:900;color:${s.color||'var(--ruby)'};line-height:1;">${s.number}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;font-weight:600;">${s.label}</div>
+      </div>`).join('');
+    tableContainer.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">${stats}</div>`;
+  } else {
+    canvas.style.display='block';
+    const colors=(vizData.datasets||[]).map(d=>d.color||'#D41535');
+    const bgColors=colors.map(c=>c+'CC');
+    const chartData={
+      labels:vizData.labels||[],
+      datasets:(vizData.datasets||[]).map((ds,i)=>({
+        label:ds.label||'',
+        data:ds.data||[],
+        backgroundColor:['pie','doughnut'].includes(vizData.chartType)
+          ? (vizData.labels||[]).map((_,j)=>['#D41535','#1D4ED8','#16A34A','#F59E0B','#7C3AED','#0891B2','#EA580C','#DB2777'][j%8]+'CC')
+          : bgColors[i],
+        borderColor:['pie','doughnut'].includes(vizData.chartType)
+          ? (vizData.labels||[]).map((_,j)=>['#D41535','#1D4ED8','#16A34A','#F59E0B','#7C3AED','#0891B2','#EA580C','#DB2777'][j%8])
+          : colors[i],
+        borderWidth:2,
+        borderRadius:vizData.chartType==='bar'?4:0,
+        tension:vizData.chartType==='line'?0.3:0,
+        fill:vizData.chartType==='line',
+      }))
+    };
+    currentChartInstance=new Chart(canvas,{
+      type:vizData.chartType,
+      data:chartData,
+      options:{
+        responsive:true,
+        maintainAspectRatio:true,
+        plugins:{
+          legend:{display:chartData.datasets.length>1||['pie','doughnut'].includes(vizData.chartType),labels:{font:{family:'Inter',size:11},padding:12}},
+          title:{display:!!vizData.title,text:vizData.title,font:{family:'Inter',size:14,weight:'bold'}},
+        },
+        scales:['pie','doughnut'].includes(vizData.chartType)?{}:{
+          x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Inter',size:10}}},
+          y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{family:'Inter',size:10}}},
+        }
+      }
+    });
+  }
+}
+
+function captureVizAsImage(){
+  const canvas=document.getElementById('viz-canvas');
+  const tableContainer=document.getElementById('viz-table-container');
+  if(canvas.style.display!=='none' && currentChartInstance){
+    return Promise.resolve(canvas.toDataURL('image/png'));
+  }
+  // For table/infographic — render to canvas via html2canvas alternative
+  // We'll build an SVG snapshot of the table HTML
+  return new Promise(resolve=>{
+    const html=tableContainer.innerHTML;
+    // Encode as data URL using a blob
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,sans-serif;padding:16px;background:#fff;">${html}</div>
+      </foreignObject>
+    </svg>`;
+    const blob=new Blob([svg],{type:'image/svg+xml'});
+    const url=URL.createObjectURL(blob);
+    const img=new Image();
+    const offCanvas=document.createElement('canvas');
+    offCanvas.width=640;offCanvas.height=320;
+    img.onload=()=>{
+      offCanvas.getContext('2d').drawImage(img,0,0);
+      URL.revokeObjectURL(url);
+      resolve(offCanvas.toDataURL('image/png'));
+    };
+    img.onerror=()=>resolve(null);
+    img.src=url;
+  });
+}
+
+async function insertChartToSlide(){
+  const imgSrc=await captureVizAsImage();
+  if(!imgSrc){toast('Could not capture chart','error');return;}
+  const slide=currentSlides[activeSlideIdx];
+  slide.chartImage=imgSrc;
+  slide.chartTitle=currentVizData.title||'';
+  slide.chartDescription=currentVizData.description||'';
+  // Save chip
+  addVizChip(currentVizData.title||'Chart',imgSrc);
+  closeModal('modal-dataviz');
+  renderThumbs();renderActiveSlide();
+  toast('Chart added to slide','success');
+}
+
+async function insertChartAsNewSlide(){
+  const imgSrc=await captureVizAsImage();
+  if(!imgSrc){toast('Could not capture chart','error');return;}
+  const newSlide={
+    id:'viz_'+Date.now(),
+    type:'chart',
+    headline:currentVizData.title||'Data Insight',
+    body:currentVizData.description||'',
+    chartImage:imgSrc,
+    chartTitle:currentVizData.title||'',
+    chartDescription:currentVizData.description||'',
+    photo:null,photoPlacement:null,
+    font:selectedTemplate.font,fontScale:1,
+  };
+  currentSlides.splice(activeSlideIdx+1,0,newSlide);
+  activeSlideIdx++;
+  addVizChip(currentVizData.title||'Chart',imgSrc);
+  closeModal('modal-dataviz');
+  renderThumbs();renderActiveSlide();
+  document.getElementById('deck-slide-count').textContent=`${currentSlides.length} slides`;
+  toast('Chart slide added','success');
+}
+
+function addVizChip(label,imgSrc){
+  vizChips.push({label,imgSrc});
+  renderVizChips();
+}
+
+function renderVizChips(){
+  const wrap=document.getElementById('viz-chips');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  vizChips.forEach((chip,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--ruby-pale);border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--ruby);cursor:pointer;';
+    div.innerHTML=`&#128202; ${chip.label} <span onclick="removeVizChip(${i})" style="margin-left:2px;opacity:.6;font-size:12px;">&#x2715;</span>`;
+    wrap.appendChild(div);
+  });
+}
+
+function removeVizChip(i){
+  vizChips.splice(i,1);
+  renderVizChips();
 }
 
 // ─── API Key ───────────────────────────────────────────────────────
