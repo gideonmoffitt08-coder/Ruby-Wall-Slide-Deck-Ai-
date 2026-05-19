@@ -229,10 +229,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:8px;">
             <button onclick="adjustSlideCount(-1)" style="width:30px;height:30px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-size:16px;font-weight:700;cursor:pointer;color:var(--ruby);">−</button>
-            <div style="min-width:70px;text-align:center;">
-              <div id="slide-count-display" style="font-size:22px;font-weight:900;color:var(--ruby);line-height:1;"></div>
-              <div style="font-size:9px;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:1px;">SLIDES</div>
-            </div>
+            <input id="slide-count-input" type="number" min="1"
+              style="width:64px;height:36px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:20px;font-weight:900;color:var(--ruby);text-align:center;font-family:'Inter',sans-serif;outline:none;padding:0 4px;"
+              oninput="onSlideCountInput(this)"
+              onfocus="this.select()"/>
             <button onclick="adjustSlideCount(1)" style="width:30px;height:30px;border-radius:7px;border:1.5px solid var(--border);background:#fff;font-size:16px;font-weight:700;cursor:pointer;color:var(--ruby);">+</button>
           </div>
           <div id="slide-count-hint" style="font-size:11px;color:var(--text-muted);font-weight:600;"></div>
@@ -426,26 +426,147 @@ const FONTS = [
 
 // ─── Templates (20) ──────────────────────────────────────────────
 const TEMPLATES = [
-  {id:'bold',      name:'Bold Business',    titleBg:'linear-gradient(135deg,#D41535,#FF4D6A)',    bodyBg:'#fff',              titleColor:'#fff', bodyColor:'#1A0A0D', accentColor:'#D41535', font:'Montserrat'},
-  {id:'midnight',  name:'Midnight Navy',    titleBg:'linear-gradient(135deg,#0F172A,#1E3A5F)',    bodyBg:'linear-gradient(135deg,#0F172A,#1a2744)', titleColor:'#fff', bodyColor:'#fff', accentColor:'#60A5FA', font:'Inter'},
-  {id:'forest',    name:'Forest Green',     titleBg:'linear-gradient(135deg,#14532D,#166534)',    bodyBg:'linear-gradient(135deg,#F0FDF4,#DCFCE7)', titleColor:'#fff', bodyColor:'#14532D', accentColor:'#16A34A', font:'Raleway'},
-  {id:'slate',     name:'Slate Pro',        titleBg:'linear-gradient(135deg,#334155,#475569)',    bodyBg:'#F8FAFC',           titleColor:'#fff', bodyColor:'#1E293B', accentColor:'#64748B', font:'Inter'},
-  {id:'gold',      name:'Gold & Black',     titleBg:'linear-gradient(135deg,#78350F,#92400E)',    bodyBg:'#0C0A09',           titleColor:'#FCD34D', bodyColor:'#FCD34D', accentColor:'#F59E0B', font:'Playfair'},
-  {id:'purple',    name:'Royal Purple',     titleBg:'linear-gradient(135deg,#4C1D95,#6D28D9)',    bodyBg:'linear-gradient(135deg,#1E1B4B,#312E81)', titleColor:'#fff', bodyColor:'#fff', accentColor:'#A78BFA', font:'Poppins'},
-  {id:'clean',     name:'Clean White',      titleBg:'linear-gradient(135deg,#1A0A0D,#2D1018)',    bodyBg:'#FFFFFF',           titleColor:'#fff', bodyColor:'#1A0A0D', accentColor:'#D41535', font:'DM Sans'},
-  {id:'sky',       name:'Sky Blue',         titleBg:'linear-gradient(135deg,#0369A1,#0EA5E9)',    bodyBg:'linear-gradient(135deg,#F0F9FF,#E0F2FE)', titleColor:'#fff', bodyColor:'#0C4A6E', accentColor:'#0EA5E9', font:'Inter'},
-  {id:'warm',      name:'Warm Tan',         titleBg:'linear-gradient(135deg,#78350F,#B45309)',    bodyBg:'linear-gradient(135deg,#FFFBEB,#FEF3C7)', titleColor:'#fff', bodyColor:'#451A03', accentColor:'#D97706', font:'Playfair'},
-  {id:'rose',      name:'Rose Gold',        titleBg:'linear-gradient(135deg,#9D174D,#DB2777)',    bodyBg:'linear-gradient(135deg,#FFF1F2,#FFE4E6)', titleColor:'#fff', bodyColor:'#881337', accentColor:'#E11D48', font:'Raleway'},
-  {id:'teal',      name:'Teal Modern',      titleBg:'linear-gradient(135deg,#0F766E,#0D9488)',    bodyBg:'linear-gradient(135deg,#F0FDFA,#CCFBF1)', titleColor:'#fff', bodyColor:'#134E4A', accentColor:'#14B8A6', font:'Poppins'},
-  {id:'charcoal',  name:'Charcoal Bold',    titleBg:'linear-gradient(135deg,#111827,#1F2937)',    bodyBg:'#111827',           titleColor:'#F9FAFB', bodyColor:'#F9FAFB', accentColor:'#F59E0B', font:'Space Grotesk'},
-  {id:'coral',     name:'Coral Pop',        titleBg:'linear-gradient(135deg,#C2410C,#EA580C)',    bodyBg:'linear-gradient(135deg,#FFF7ED,#FFEDD5)', titleColor:'#fff', bodyColor:'#7C2D12', accentColor:'#F97316', font:'Montserrat'},
-  {id:'indigo',    name:'Deep Indigo',      titleBg:'linear-gradient(135deg,#312E81,#4338CA)',    bodyBg:'linear-gradient(135deg,#EEF2FF,#E0E7FF)', titleColor:'#fff', bodyColor:'#1E1B4B', accentColor:'#4F46E5', font:'Inter'},
-  {id:'sage',      name:'Sage & Cream',     titleBg:'linear-gradient(135deg,#3F6212,#4D7C0F)',    bodyBg:'linear-gradient(135deg,#F7FEE7,#ECFCCB)', titleColor:'#fff', bodyColor:'#1A2E05', accentColor:'#65A30D', font:'Raleway'},
-  {id:'crimson',   name:'Crimson Classic',  titleBg:'linear-gradient(135deg,#7F1D1D,#991B1B)',    bodyBg:'linear-gradient(135deg,#FFF1F2,#FEE2E2)', titleColor:'#FEE2E2', bodyColor:'#7F1D1D', accentColor:'#DC2626', font:'Playfair'},
-  {id:'mono',      name:'Monochrome',       titleBg:'linear-gradient(135deg,#000,#374151)',        bodyBg:'#F9FAFB',           titleColor:'#fff', bodyColor:'#111827', accentColor:'#374151', font:'Space Grotesk'},
-  {id:'ocean',     name:'Ocean Depth',      titleBg:'linear-gradient(135deg,#164E63,#0E7490)',    bodyBg:'linear-gradient(135deg,#ECFEFF,#CFFAFE)', titleColor:'#fff', bodyColor:'#083344', accentColor:'#06B6D4', font:'DM Sans'},
-  {id:'berry',     name:'Berry & White',    titleBg:'linear-gradient(135deg,#581C87,#7E22CE)',    bodyBg:'#fff',              titleColor:'#fff', bodyColor:'#3B0764', accentColor:'#9333EA', font:'Poppins'},
-  {id:'executive', name:'Executive Grey',   titleBg:'linear-gradient(135deg,#1C1917,#292524)',    bodyBg:'linear-gradient(135deg,#FAFAF9,#F5F5F4)', titleColor:'#E7E5E4', bodyColor:'#1C1917', accentColor:'#D41535', font:'Montserrat'},
+  // Each template has: titleBg, bodyBg, titleColor, bodyColor, accentColor, font
+  // Plus layout modifiers: sidebarColor, headerBarColor, style
+  {id:'consulting',  name:'Consulting Pro',
+    titleBg:'#FFFFFF', bodyBg:'#FFFFFF',
+    titleColor:'#111827', bodyColor:'#111827', accentColor:'#E8472A',
+    sidebarColor:'#E8472A', headerBarColor:'#E8472A',
+    style:'sidebar-accent', font:'Inter',
+    preview:'linear-gradient(135deg,#fff 60%,#E8472A 60%)'},
+
+  {id:'pitch-dark',  name:'Pitch Deck Dark',
+    titleBg:'#0F1117', bodyBg:'#0F1117',
+    titleColor:'#F9FAFB', bodyColor:'#E5E7EB', accentColor:'#F59E0B',
+    sidebarColor:'#F59E0B', headerBarColor:'#F59E0B',
+    style:'dark-gold', font:'Space Grotesk',
+    preview:'linear-gradient(135deg,#0F1117,#1F2937)'},
+
+  {id:'blueprint',   name:'Blueprint',
+    titleBg:'#1D4ED8', bodyBg:'#F8FAFF',
+    titleColor:'#FFFFFF', bodyColor:'#1E3A8A', accentColor:'#1D4ED8',
+    sidebarColor:'#DBEAFE', headerBarColor:'#1D4ED8',
+    style:'blue-minimal', font:'DM Sans',
+    preview:'linear-gradient(135deg,#1D4ED8 40%,#F8FAFF 40%)'},
+
+  {id:'executive',   name:'Executive',
+    titleBg:'#1C1917', bodyBg:'#FAFAF9',
+    titleColor:'#F5F5F4', bodyColor:'#1C1917', accentColor:'#D41535',
+    sidebarColor:'#E7E5E4', headerBarColor:'#D41535',
+    style:'executive', font:'Playfair',
+    preview:'linear-gradient(135deg,#1C1917 50%,#FAFAF9 50%)'},
+
+  {id:'gradient-blue', name:'Azure Gradient',
+    titleBg:'linear-gradient(135deg,#1E40AF,#3B82F6,#06B6D4)', bodyBg:'#F0F9FF',
+    titleColor:'#FFFFFF', bodyColor:'#0C4A6E', accentColor:'#3B82F6',
+    sidebarColor:'#DBEAFE', headerBarColor:'#3B82F6',
+    style:'gradient-modern', font:'Poppins',
+    preview:'linear-gradient(135deg,#1E40AF,#3B82F6,#06B6D4)'},
+
+  {id:'minimal-orange', name:'Project Kickoff',
+    titleBg:'#FFFFFF', bodyBg:'#FFFFFF',
+    titleColor:'#1F2937', bodyColor:'#374151', accentColor:'#EA580C',
+    sidebarColor:'#FFF7ED', headerBarColor:'#EA580C',
+    style:'minimal-accent', font:'Montserrat',
+    preview:'linear-gradient(135deg,#fff 55%,#EA580C 55%)'},
+
+  {id:'navy-gold',   name:'Navy & Gold',
+    titleBg:'linear-gradient(160deg,#0F172A 55%,#1E3A5F 100%)', bodyBg:'#0F172A',
+    titleColor:'#FCD34D', bodyColor:'#E2E8F0', accentColor:'#F59E0B',
+    sidebarColor:'#F59E0B', headerBarColor:'#F59E0B',
+    style:'dark-premium', font:'Playfair',
+    preview:'linear-gradient(135deg,#0F172A,#1E3A5F)'},
+
+  {id:'forest-clean', name:'Forest & White',
+    titleBg:'#166534', bodyBg:'#F0FDF4',
+    titleColor:'#FFFFFF', bodyColor:'#14532D', accentColor:'#16A34A',
+    sidebarColor:'#DCFCE7', headerBarColor:'#16A34A',
+    style:'nature', font:'Raleway',
+    preview:'linear-gradient(135deg,#166534 45%,#F0FDF4 45%)'},
+
+  {id:'corporate-blue', name:'Corporate Blue',
+    titleBg:'linear-gradient(135deg,#1E3A8A,#2563EB)', bodyBg:'#EFF6FF',
+    titleColor:'#FFFFFF', bodyColor:'#1E40AF', accentColor:'#2563EB',
+    sidebarColor:'#BFDBFE', headerBarColor:'#1D4ED8',
+    style:'corporate', font:'Inter',
+    preview:'linear-gradient(135deg,#1E3A8A,#2563EB)'},
+
+  {id:'rose-editorial', name:'Rose Editorial',
+    titleBg:'#FFFFFF', bodyBg:'#FFFFFF',
+    titleColor:'#111827', bodyColor:'#1F2937', accentColor:'#E11D48',
+    sidebarColor:'#FFE4E6', headerBarColor:'#E11D48',
+    style:'editorial', font:'Playfair',
+    preview:'linear-gradient(135deg,#fff 60%,#E11D48 60%)'},
+
+  {id:'teal-clean',  name:'Teal & Clean',
+    titleBg:'linear-gradient(135deg,#0F766E,#14B8A6)', bodyBg:'#F0FDFA',
+    titleColor:'#FFFFFF', bodyColor:'#134E4A', accentColor:'#14B8A6',
+    sidebarColor:'#CCFBF1', headerBarColor:'#0D9488',
+    style:'teal-modern', font:'DM Sans',
+    preview:'linear-gradient(135deg,#0F766E,#14B8A6)'},
+
+  {id:'monochrome',  name:'Monochrome Pro',
+    titleBg:'#111827', bodyBg:'#F9FAFB',
+    titleColor:'#F9FAFB', bodyColor:'#111827', accentColor:'#374151',
+    sidebarColor:'#E5E7EB', headerBarColor:'#111827',
+    style:'mono', font:'Space Grotesk',
+    preview:'linear-gradient(135deg,#111827 50%,#F9FAFB 50%)'},
+
+  {id:'purple-modern', name:'Purple Modern',
+    titleBg:'linear-gradient(135deg,#4C1D95,#7C3AED)', bodyBg:'#F5F3FF',
+    titleColor:'#FFFFFF', bodyColor:'#3B0764', accentColor:'#7C3AED',
+    sidebarColor:'#EDE9FE', headerBarColor:'#6D28D9',
+    style:'modern-purple', font:'Poppins',
+    preview:'linear-gradient(135deg,#4C1D95,#7C3AED)'},
+
+  {id:'warm-cream',  name:'Warm Executive',
+    titleBg:'linear-gradient(160deg,#78350F,#B45309)', bodyBg:'#FFFBEB',
+    titleColor:'#FEF3C7', bodyColor:'#451A03', accentColor:'#D97706',
+    sidebarColor:'#FDE68A', headerBarColor:'#B45309',
+    style:'warm', font:'Playfair',
+    preview:'linear-gradient(135deg,#78350F,#B45309)'},
+
+  {id:'coral-white', name:'Coral & White',
+    titleBg:'#FF6B47', bodyBg:'#FFFFFF',
+    titleColor:'#FFFFFF', bodyColor:'#1F2937', accentColor:'#FF6B47',
+    sidebarColor:'#FEE2D5', headerBarColor:'#FF6B47',
+    style:'bold-coral', font:'Montserrat',
+    preview:'linear-gradient(135deg,#FF6B47 45%,#fff 45%)'},
+
+  {id:'sage-neutral', name:'Sage Neutral',
+    titleBg:'linear-gradient(135deg,#3F6212,#65A30D)', bodyBg:'#F7FEE7',
+    titleColor:'#FFFFFF', bodyColor:'#1A2E05', accentColor:'#65A30D',
+    sidebarColor:'#ECFCCB', headerBarColor:'#4D7C0F',
+    style:'organic', font:'Raleway',
+    preview:'linear-gradient(135deg,#3F6212,#65A30D)'},
+
+  {id:'tech-dark',   name:'Tech Dark',
+    titleBg:'linear-gradient(135deg,#020617,#0F172A)', bodyBg:'#020617',
+    titleColor:'#22D3EE', bodyColor:'#CBD5E1', accentColor:'#06B6D4',
+    sidebarColor:'#0E7490', headerBarColor:'#06B6D4',
+    style:'tech', font:'Space Grotesk',
+    preview:'linear-gradient(135deg,#020617,#0F172A)'},
+
+  {id:'ocean-light', name:'Ocean Light',
+    titleBg:'linear-gradient(135deg,#164E63,#0E7490)', bodyBg:'#ECFEFF',
+    titleColor:'#FFFFFF', bodyColor:'#083344', accentColor:'#06B6D4',
+    sidebarColor:'#CFFAFE', headerBarColor:'#0891B2',
+    style:'ocean', font:'DM Sans',
+    preview:'linear-gradient(135deg,#164E63,#0E7490)'},
+
+  {id:'ruby-classic', name:'Ruby Classic',
+    titleBg:'linear-gradient(160deg,#D41535 55%,#8B0D1F 100%)', bodyBg:'#FFFFFF',
+    titleColor:'#FFFFFF', bodyColor:'#1A0A0D', accentColor:'#D41535',
+    sidebarColor:'#FFE8EC', headerBarColor:'#D41535',
+    style:'ruby', font:'Montserrat',
+    preview:'linear-gradient(135deg,#D41535,#FF4D6A)'},
+
+  {id:'glass-light', name:'Glass & Light',
+    titleBg:'linear-gradient(135deg,#667EEA,#764BA2)', bodyBg:'#FAFBFF',
+    titleColor:'#FFFFFF', bodyColor:'#1E1B4B', accentColor:'#764BA2',
+    sidebarColor:'#EDE9FE', headerBarColor:'#6D28D9',
+    style:'glass', font:'Poppins',
+    preview:'linear-gradient(135deg,#667EEA,#764BA2)'},
 ];
 
 const BG_PRESETS = [
@@ -479,12 +600,21 @@ function renderTemplatePicker(){
     const div=document.createElement('div');
     div.className='tpl-card'+(t.id===selectedTemplate.id?' selected':'');
     div.title=t.name;
-    div.innerHTML=`<div style="width:100%;height:100%;background:${t.titleBg};display:flex;align-items:center;justify-content:center;padding:8px;">
-      <div style="text-align:center;">
-        <div style="height:4px;width:60%;background:rgba(255,255,255,0.4);border-radius:2px;margin:0 auto 5px;"></div>
-        <div style="height:2px;width:80%;background:rgba(255,255,255,0.25);border-radius:1px;margin:0 auto 3px;"></div>
-        <div style="height:2px;width:70%;background:rgba(255,255,255,0.25);border-radius:1px;margin:0 auto;"></div>
-        <div style="font-size:8px;color:rgba(255,255,255,0.9);margin-top:6px;font-family:'DM Mono',monospace;font-weight:700;">${t.name}</div>
+    const isDark=t.titleColor==='#FFFFFF'||t.titleColor==='#F9FAFB'||t.titleColor==='#FCD34D'||t.titleColor==='#22D3EE';
+    const txtColor=isDark?'rgba(255,255,255,0.9)':'rgba(0,0,0,0.7)';
+    // Mini slide preview showing layout style
+    div.innerHTML=`<div style="width:100%;height:100%;background:${t.preview||t.titleBg};position:relative;overflow:hidden;">
+      <!-- Accent bar -->
+      <div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:${t.accentColor};opacity:0.9;"></div>
+      <!-- Content lines -->
+      <div style="padding:10px 10px 10px 14px;">
+        <div style="height:3px;width:55%;background:${t.accentColor};border-radius:1px;margin-bottom:5px;opacity:.9;"></div>
+        <div style="height:2px;width:75%;background:${txtColor};border-radius:1px;margin-bottom:3px;opacity:.5;"></div>
+        <div style="height:2px;width:60%;background:${txtColor};border-radius:1px;opacity:.35;"></div>
+      </div>
+      <!-- Bottom label -->
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,0.35);">
+        <div style="font-size:7px;color:#fff;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
       </div>
     </div>`;
     div.onclick=()=>{
@@ -492,7 +622,7 @@ function renderTemplatePicker(){
       document.getElementById('selected-tpl-name').textContent=t.name+' selected';
       document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('selected'));
       div.classList.add('selected');
-      if(currentSlides.length) {renderThumbs();renderActiveSlide();}
+      if(currentSlides.length){renderThumbs();renderActiveSlide();}
     };
     grid.appendChild(div);
   });
@@ -640,16 +770,35 @@ function deletePresentation(id){
 
 // ─── Slide Count Stepper ──────────────────────────────────────────
 function initSlideCountStepper(){
-  selectedSlideCount=PLANS[currentUser.plan].slides;updateSlideCountUI();
+  const plan=PLANS[currentUser.plan];
+  // Default: plan max for regular users, 6 for admin (sensible starting point)
+  selectedSlideCount = currentUser.plan==='admin' ? 6 : plan.slides;
+  updateSlideCountUI();
 }
 function adjustSlideCount(d){
-  const max=PLANS[currentUser.plan].slides;
+  const max=currentUser.plan==='admin'?99:PLANS[currentUser.plan].slides;
   selectedSlideCount=Math.min(max,Math.max(1,selectedSlideCount+d));updateSlideCountUI();
+}
+function onSlideCountInput(el){
+  const max=currentUser.plan==='admin'?99:PLANS[currentUser.plan].slides;
+  let val=parseInt(el.value)||1;
+  val=Math.min(max,Math.max(1,val));
+  selectedSlideCount=val;
+  // Don't overwrite while typing — just clamp on blur
+  el.style.borderColor=val===max?'var(--ruby)':'var(--border)';
+  document.getElementById('slide-count-hint').textContent=currentUser.plan==='admin'
+    ?`Max 99 (Admin) · Type any number 1–99`
+    :`Max ${PLANS[currentUser.plan].slides} on ${PLANS[currentUser.plan].name} plan`;
 }
 function updateSlideCountUI(){
   const plan=PLANS[currentUser.plan];
-  document.getElementById('slide-count-display').textContent=selectedSlideCount;
-  document.getElementById('slide-count-hint').textContent=currentUser.plan==='admin'?'Unlimited (Admin)':`Max ${plan.slides} on ${plan.name}`;
+  const inp=document.getElementById('slide-count-input');
+  if(inp) inp.value=selectedSlideCount;
+  const max=currentUser.plan==='admin'?99:plan.slides;
+  if(inp) inp.max=max;
+  document.getElementById('slide-count-hint').textContent=currentUser.plan==='admin'
+    ?`Max 99 (Admin) · Type any number 1–99`
+    :`Max ${plan.slides} on ${plan.name} plan · Type or use + / −`;
 }
 
 // ─── System Prompt ────────────────────────────────────────────────
@@ -737,103 +886,133 @@ function buildSlideHTML(slide,isThumbnail){
   const bg=slide.customBg||(isTitle?tpl.titleBg:tpl.bodyBg);
   const textColor=slide.customTextColor||(isTitle?tpl.titleColor:tpl.bodyColor);
   const accent=tpl.accentColor;
+  const sidebar=tpl.sidebarColor||'rgba(255,255,255,0.08)';
   const fontStack=getFontStack(slide.font||tpl.font);
-  const p=isThumbnail?0.32:1;
-  const pad=isThumbnail?'8px 10px':'40px 48px';
-  const centered=isTitle;
+  const T=isThumbnail;
+  const p=T?0.32:1;
+  const hs=(b)=>T?`${Math.round(b*p)}px`:`${b}px`;
 
   // Photo layers
   let photoLayer='';
   if(slide.photo&&slide.photoPlacement){
     const src=slide.photo;
-    if(slide.photoPlacement==='background'){
-      photoLayer=`<div style="position:absolute;inset:0;background:url('${src}') center/cover no-repeat;opacity:0.9;"></div>`;
-    }else if(slide.photoPlacement==='overlay'){
-      photoLayer=`<div style="position:absolute;inset:0;background:url('${src}') center/cover no-repeat;"></div><div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);"></div>`;
-    }else if(slide.photoPlacement==='right'){
-      photoLayer=`<div style="position:absolute;right:0;top:0;bottom:0;width:42%;background:url('${src}') center/cover no-repeat;"></div>`;
-    }else if(slide.photoPlacement==='left'){
-      photoLayer=`<div style="position:absolute;left:0;top:0;bottom:0;width:42%;background:url('${src}') center/cover no-repeat;"></div>`;
-    }else if(slide.photoPlacement==='top'){
-      photoLayer=`<div style="position:absolute;left:0;top:0;right:0;height:38%;background:url('${src}') center/cover no-repeat;"></div>`;
-    }
+    if(slide.photoPlacement==='background') photoLayer=`<div style="position:absolute;inset:0;background:url('${src}') center/cover no-repeat;opacity:0.9;"></div>`;
+    else if(slide.photoPlacement==='overlay') photoLayer=`<div style="position:absolute;inset:0;background:url('${src}') center/cover no-repeat;"></div><div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);"></div>`;
+    else if(slide.photoPlacement==='right') photoLayer=`<div style="position:absolute;right:0;top:0;bottom:0;width:42%;background:url('${src}') center/cover no-repeat;"></div>`;
+    else if(slide.photoPlacement==='left') photoLayer=`<div style="position:absolute;left:0;top:0;bottom:0;width:42%;background:url('${src}') center/cover no-repeat;"></div>`;
+    else if(slide.photoPlacement==='top') photoLayer=`<div style="position:absolute;left:0;top:0;right:0;height:38%;background:url('${src}') center/cover no-repeat;"></div>`;
   }
-
-  // Adjust content width if photo is left/right
   const hasPhotoSide=slide.photo&&(slide.photoPlacement==='right'||slide.photoPlacement==='left');
-  const contentWidth=hasPhotoSide?'54%':'100%';
-  const contentOffset=slide.photoPlacement==='left'?'44%':'0';
+  const cW=hasPhotoSide?'54%':'100%';
+  const cOff=slide.photoPlacement==='left'?'44%':'0';
 
-  // Dot grid
-  const dotColor=isTitle?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.04)';
-  const decor=`<div style="position:absolute;inset:0;background-image:radial-gradient(circle,${dotColor} 1px,transparent 1px);background-size:${isThumbnail?'16px 16px':'28px 28px'};pointer-events:none;"></div>`;
+  // ── Structural chrome based on template style ──────────────────
+  const style=tpl.style||'default';
+  let chrome='';
+
+  // Left sidebar accent strip (consulting, minimal-accent, editorial, ruby, etc.)
+  if(['sidebar-accent','minimal-accent','editorial','ruby','corporate','nature','teal-modern','ocean','organic','bold-coral','glass'].includes(style)){
+    chrome+=`<div style="position:absolute;left:0;top:0;bottom:0;width:${hs(6)};background:${accent};z-index:1;"></div>`;
+  }
+  // Top header bar
+  if(['corporate','blue-minimal','executive','warm','mono'].includes(style)){
+    chrome+=`<div style="position:absolute;top:0;left:0;right:0;height:${hs(5)};background:${accent};z-index:1;"></div>`;
+  }
+  // Side color block (title slides for sidebar styles)
+  if(isTitle&&['sidebar-accent','minimal-accent','editorial','ruby'].includes(style)){
+    chrome+=`<div style="position:absolute;right:0;top:0;bottom:0;width:${hs(120)};background:${accent};z-index:0;opacity:0.12;"></div>`;
+  }
+  // Dark premium: diagonal accent
+  if(['dark-premium','dark-gold','tech'].includes(style)){
+    chrome+=`<div style="position:absolute;bottom:0;right:0;width:${hs(160)};height:${hs(160)};background:${accent};opacity:0.08;border-radius:${hs(80)} 0 0 0;z-index:0;"></div>`;
+  }
+  // Gradient modern: floating orbs
+  if(['gradient-modern','glass'].includes(style)){
+    chrome+=`<div style="position:absolute;top:${hs(-40)};right:${hs(-40)};width:${hs(200)};height:${hs(200)};border-radius:50%;background:rgba(255,255,255,0.08);z-index:0;"></div>`;
+    chrome+=`<div style="position:absolute;bottom:${hs(-30)};left:${hs(60)};width:${hs(120)};height:${hs(120)};border-radius:50%;background:rgba(255,255,255,0.05);z-index:0;"></div>`;
+  }
+  // Bottom accent bar (all templates)
+  chrome+=`<div style="position:absolute;bottom:0;left:0;right:0;height:${hs(3)};background:${accent};opacity:0.5;z-index:1;"></div>`;
 
   // Watermark
-  const wmColor=isTitle?'rgba(255,255,255,0.3)':'rgba(0,0,0,0.15)';
-  const wm=`<div style="position:absolute;bottom:${isThumbnail?'3px':'12px'};left:${isThumbnail?'5px':'18px'};font-size:${isThumbnail?'5px':'9px'};font-family:'DM Mono',monospace;letter-spacing:.15em;text-transform:uppercase;color:${wmColor};z-index:3;">Ruby Wall · DeckAI</div>
-  <div style="position:absolute;bottom:${isThumbnail?'3px':'12px'};right:${isThumbnail?'5px':'18px'};font-size:${isThumbnail?'5px':'9px'};font-family:'DM Mono',monospace;color:${wmColor};z-index:3;">${currentSlides.indexOf(slide)+1}/${currentSlides.length}</div>`;
+  const isDarkBg=isTitle&&(tpl.titleColor==='#FFFFFF'||tpl.titleColor==="#F9FAFB"||tpl.titleColor==="#FCD34D"||tpl.titleColor==="#22D3EE");
+  const wmC=isDarkBg?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.18)';
+  const wm=`<div style="position:absolute;bottom:${hs(10)};left:${hs(16)};font-size:${hs(7)};font-family:'DM Mono',monospace;letter-spacing:.15em;text-transform:uppercase;color:${wmC};z-index:3;">Ruby Wall · DeckAI</div>
+  <div style="position:absolute;bottom:${hs(10)};right:${hs(14)};font-size:${hs(7)};font-family:'DM Mono',monospace;color:${wmC};z-index:3;">${currentSlides.indexOf(slide)+1} / ${currentSlides.length}</div>`;
 
-  // Accent bar
-  const accentBar=`<div style="position:absolute;bottom:0;left:0;right:0;height:${isThumbnail?'2px':'4px'};background:${accent};opacity:0.6;"></div>`;
-
+  // ── Slide content by type ──────────────────────────────────────
+  const leftPad=['sidebar-accent','minimal-accent','editorial','ruby','corporate','nature','teal-modern','ocean','organic','bold-coral','glass'].includes(style)?hs(14):'0';
   let content='';
-  const hs=(base)=>isThumbnail?`${Math.round(base*p)}px`:`${base}px`;
 
-  if(slide.type==='title'||slide.type==='cta'){
-    content=`<div style="text-align:center;z-index:2;max-width:85%;">
-      <div style="width:${hs(40)};height:${hs(3)};background:${accent};border-radius:2px;margin:0 auto ${hs(16)};"></div>
-      <h1 style="color:${textColor};font-size:${hs(36)};font-weight:900;line-height:1.1;margin-bottom:${hs(12)};letter-spacing:-0.02em;">${slide.headline||''}</h1>
-      ${slide.subheadline?`<p style="color:${textColor};font-size:${hs(16)};opacity:.8;font-weight:500;margin-bottom:${hs(20)};">${slide.subheadline}</p>`:''}
-      ${slide.type==='cta'?`<div style="display:inline-block;border:2px solid ${textColor};color:${textColor};padding:${hs(8)} ${hs(20)};border-radius:${hs(6)};font-size:${hs(11)};font-family:'DM Mono',monospace;letter-spacing:.12em;opacity:.85;">rubywall.com</div>`:''}
-    </div>`;
-  }else if(slide.type==='intro'){
-    content=`<div style="z-index:2;max-width:${contentWidth};margin-left:${contentOffset};">
-      <div style="display:flex;align-items:center;gap:${hs(10)};margin-bottom:${hs(18)};">
-        <div style="width:${hs(4)};height:${hs(32)};background:${accent};border-radius:2px;flex-shrink:0;"></div>
-        <h2 style="color:${textColor};font-size:${hs(26)};font-weight:800;line-height:1.15;letter-spacing:-0.02em;">${slide.headline||''}</h2>
+  if(isTitle){
+    // Title / CTA
+    const centered=['gradient-modern','dark-gold','tech','glass','navy-gold','dark-premium'].includes(style);
+    content=`<div style="z-index:2;max-width:${hs(600)};${centered?'text-align:center;':''}" >
+      <div style="display:flex;align-items:center;gap:${hs(10)};margin-bottom:${hs(14)};${centered?'justify-content:center;':''}">
+        <div style="width:${hs(36)};height:${hs(3)};background:${accent};border-radius:2px;"></div>
+        ${!centered?`<div style="width:${hs(16)};height:${hs(3)};background:${accent};opacity:.4;border-radius:2px;"></div>`:''}
       </div>
-      <p style="color:${textColor};font-size:${hs(14)};line-height:1.7;opacity:.82;">${slide.body||''}</p>
+      <h1 style="color:${textColor};font-size:${hs(38)};font-weight:900;line-height:1.1;margin-bottom:${hs(12)};letter-spacing:-0.025em;">${slide.headline||''}</h1>
+      ${slide.subheadline?`<p style="color:${textColor};font-size:${hs(15)};opacity:.75;font-weight:500;line-height:1.5;margin-bottom:${hs(22)};">${slide.subheadline}</p>`:''}
+      ${slide.type==='cta'?`<div style="display:inline-block;border:1.5px solid ${accent};color:${accent};padding:${hs(8)} ${hs(24)};border-radius:${hs(4)};font-size:${hs(10)};font-family:'DM Mono',monospace;letter-spacing:.14em;font-weight:700;">GET STARTED · RUBYWALL.COM</div>`:''}
     </div>`;
-  }else if(slide.type==='points'){
-    const pts=(slide.points||[]).map((pt,i)=>`
-      <div style="display:flex;align-items:flex-start;gap:${hs(12)};margin-bottom:${hs(10)};">
-        <div style="width:${hs(24)};height:${hs(24)};border-radius:${hs(6)};background:${accent};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:${hs(1)};">
-          <span style="color:#fff;font-size:${hs(10)};font-weight:700;font-family:'DM Mono',monospace;">${String(i+1).padStart(2,'0')}</span>
-        </div>
-        <span style="color:${textColor};font-size:${hs(15)};line-height:1.4;font-weight:600;">${pt}</span>
-      </div>`).join('');
-    content=`<div style="z-index:2;width:100%;max-width:${contentWidth};margin-left:${contentOffset};">
-      <div style="margin-bottom:${hs(6)};">
-        <span style="color:${accent};font-size:${hs(10)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.15em;font-weight:700;">${slide.headline||''}</span>
-      </div>
-      <div style="width:${hs(40)};height:${hs(2)};background:${accent};border-radius:1px;margin-bottom:${hs(18)};"></div>
-      ${pts}
+    return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:center;justify-content:${centered?'center':'flex-start'};padding:${T?'10px 16px':'44px 52px'};padding-left:calc(${T?'16px':'52px'} + ${leftPad});position:relative;overflow:hidden;font-family:${fontStack};">
+      ${chrome}${photoLayer}${wm}${content}
     </div>`;
-  }else if(slide.type==='quote'){
-    content=`<div style="z-index:2;max-width:75%;">
-      <div style="width:${hs(32)};height:${hs(32)};background:${accent};border-radius:${hs(8)};display:flex;align-items:center;justify-content:center;margin-bottom:${hs(18)};">
-        <span style="color:#fff;font-size:${hs(20)};font-family:Georgia,serif;line-height:1;">&ldquo;</span>
-      </div>
-      <p style="color:${textColor};font-size:${hs(20)};font-style:italic;font-weight:600;line-height:1.5;margin-bottom:${hs(16)};">&ldquo;${slide.body||''}&rdquo;</p>
-      <div style="display:flex;align-items:center;gap:${hs(10)};">
-        <div style="width:${hs(28)};height:${hs(2)};background:${accent};"></div>
-        <span style="color:${accent};font-size:${hs(11)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;">${slide.headline||''}</span>
-      </div>
-    </div>`;
-  }else if(slide.type==='stat'){
-    const st=slide.stat||{number:'0',label:'Metric'};
-    content=`<div style="z-index:2;text-align:center;">
-      <div style="width:${hs(40)};height:${hs(3)};background:${accent};margin:0 auto ${hs(20)};border-radius:2px;"></div>
-      <div style="color:${accent};font-size:${hs(64)};font-weight:900;line-height:1;letter-spacing:-0.03em;margin-bottom:${hs(8)};">${st.number}</div>
-      <div style="color:${textColor};font-size:${hs(16)};font-weight:600;opacity:.8;margin-bottom:${hs(16)};">${st.label}</div>
-      ${slide.body?`<p style="color:${textColor};font-size:${hs(13)};opacity:.7;max-width:60%;margin:0 auto;">${slide.body}</p>`:''}
-    </div>`;
-  }else{
-    content=`<div style="z-index:2;color:${textColor};opacity:.4;font-size:${hs(14)};">Blank Slide — click Edit Text to customize</div>`;
   }
 
-  return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:${centered?'center':'flex-start'};justify-content:${centered?'center':'flex-start'};padding:${pad};position:relative;overflow:hidden;font-family:${fontStack};">
-    ${decor}${photoLayer}${accentBar}${wm}${content}
+  // Body slides — structured with header row
+  const headerLine=`<div style="display:flex;align-items:center;gap:${hs(10)};margin-bottom:${hs(8)};padding-bottom:${hs(8)};border-bottom:${hs(1.5)} solid ${accent}20;">
+    <div style="width:${hs(3)};height:${hs(18)};background:${accent};border-radius:1px;flex-shrink:0;"></div>
+    <span style="color:${accent};font-size:${hs(9)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-weight:700;">${slide.type.toUpperCase()}</span>
+  </div>`;
+
+  if(slide.type==='intro'){
+    content=`<div style="z-index:2;width:${cW};margin-left:${cOff};padding-left:${leftPad};">
+      ${headerLine}
+      <h2 style="color:${textColor};font-size:${hs(24)};font-weight:800;line-height:1.2;margin-bottom:${hs(12)};letter-spacing:-0.02em;">${slide.headline||''}</h2>
+      <p style="color:${textColor};font-size:${hs(13)};line-height:1.75;opacity:.80;max-width:${hs(560)};">${slide.body||''}</p>
+    </div>`;
+  } else if(slide.type==='points'){
+    const pts=(slide.points||[]).map((pt,i)=>`
+      <div style="display:flex;align-items:flex-start;gap:${hs(12)};margin-bottom:${hs(9)};padding:${hs(8)} ${hs(10)};background:${accent}09;border-radius:${hs(6)};border-left:${hs(3)} solid ${accent};">
+        <span style="color:${accent};font-size:${hs(9)};font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;margin-top:${hs(2)};letter-spacing:.05em;">${String(i+1).padStart(2,'0')}</span>
+        <span style="color:${textColor};font-size:${hs(13)};line-height:1.45;font-weight:600;">${pt}</span>
+      </div>`).join('');
+    content=`<div style="z-index:2;width:${cW};margin-left:${cOff};padding-left:${leftPad};">
+      ${headerLine}
+      <h2 style="color:${textColor};font-size:${hs(20)};font-weight:800;margin-bottom:${hs(12)};letter-spacing:-0.01em;">${slide.headline||''}</h2>
+      ${pts}
+    </div>`;
+  } else if(slide.type==='quote'){
+    content=`<div style="z-index:2;max-width:${hs(640)};padding-left:${leftPad};">
+      ${headerLine}
+      <div style="border-left:${hs(4)} solid ${accent};padding-left:${hs(20)};margin:${hs(12)} 0;">
+        <p style="color:${textColor};font-size:${hs(19)};font-style:italic;font-weight:600;line-height:1.55;margin-bottom:${hs(14)};">&ldquo;${slide.body||''}&rdquo;</p>
+        <div style="display:flex;align-items:center;gap:${hs(10)};">
+          <div style="width:${hs(20)};height:${hs(2)};background:${accent};"></div>
+          <span style="color:${accent};font-size:${hs(10)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;font-weight:700;">${slide.headline||''}</span>
+        </div>
+      </div>
+    </div>`;
+  } else if(slide.type==='stat'){
+    const st=slide.stat||{number:'—',label:'Key Metric'};
+    content=`<div style="z-index:2;width:100%;padding-left:${leftPad};">
+      ${headerLine}
+      <div style="display:flex;align-items:flex-end;gap:${hs(24)};margin-top:${hs(8)};">
+        <div>
+          <div style="color:${accent};font-size:${hs(64)};font-weight:900;line-height:1;letter-spacing:-0.04em;">${st.number}</div>
+          <div style="color:${textColor};font-size:${hs(14)};font-weight:700;opacity:.75;margin-top:${hs(4)};">${st.label}</div>
+        </div>
+        ${slide.body?`<div style="border-left:${hs(2)} solid ${accent}30;padding-left:${hs(20)};max-width:${hs(320)};"><p style="color:${textColor};font-size:${hs(12)};line-height:1.65;opacity:.72;">${slide.body}</p></div>`:''}
+      </div>
+    </div>`;
+  } else {
+    content=`<div style="z-index:2;color:${textColor};opacity:.35;font-size:${hs(13)};padding-left:${leftPad};">Click Edit Text to customize this slide</div>`;
+  }
+
+  return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:flex-start;justify-content:flex-start;padding:${T?'10px 12px':'36px 44px'};position:relative;overflow:hidden;font-family:${fontStack};">
+    ${chrome}${photoLayer}${wm}${content}
   </div>`;
 }
 
