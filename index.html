@@ -279,6 +279,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
             <button class="btn btn-sm btn-secondary" onclick="openInlineEditor()">Edit Text</button>
             <button class="btn btn-sm btn-secondary" onclick="changeSlideColor()">Background</button>
             <button class="btn btn-sm btn-secondary" onclick="changeSlideFont()">Font</button>
+            <button class="btn btn-sm btn-secondary" onclick="changeFontSize()">Text Size</button>
             <button class="btn btn-sm btn-secondary" onclick="addPhotoToSlide()">Add Photo</button>
             <button class="btn btn-sm btn-danger" onclick="deleteSlide()">Delete Slide</button>
             <button class="btn btn-sm btn-secondary" onclick="addNewSlide()">+ New Slide</button>
@@ -388,6 +389,38 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
       <input type="color" id="custom-color-pick" style="width:44px;height:32px;border-radius:7px;border:1.5px solid var(--border);cursor:pointer;" onchange="applyCustomColor(this.value)"/>
     </div>
     <button class="btn btn-secondary" onclick="closeModal('modal-bg-color')">Done</button>
+  </div></div>
+</div>
+
+<!-- Font size modal -->
+<div id="modal-fontsize" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-fontsize')">
+  <div class="modal-box"><div class="modal-stripe"></div><div class="modal-body">
+    <h3 style="font-weight:900;font-size:16px;margin-bottom:6px;">Text Size</h3>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">Adjust the text size for this slide. Changes apply to all text on the slide.</p>
+    <div style="display:grid;gap:8px;">
+      <div onclick="applyFontSize(0.75)" class="photo-placement-btn" style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:13px;font-weight:800;width:32px;">S</span>
+        <div><div style="font-weight:700;font-size:13px;">Small</div><div style="font-size:11px;color:var(--text-muted);">Compact — fits more content</div></div>
+      </div>
+      <div onclick="applyFontSize(1)" class="photo-placement-btn" style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:17px;font-weight:800;width:32px;">M</span>
+        <div><div style="font-weight:700;font-size:13px;">Medium <span style="font-size:10px;color:var(--text-muted);">(default)</span></div><div style="font-size:11px;color:var(--text-muted);">Balanced for most slides</div></div>
+      </div>
+      <div onclick="applyFontSize(1.25)" class="photo-placement-btn" style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:22px;font-weight:800;width:32px;">L</span>
+        <div><div style="font-weight:700;font-size:13px;">Large</div><div style="font-size:11px;color:var(--text-muted);">Bigger text — fewer words per slide</div></div>
+      </div>
+      <div onclick="applyFontSize(1.5)" class="photo-placement-btn" style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:28px;font-weight:800;width:32px;">XL</span>
+        <div><div style="font-weight:700;font-size:13px;">Extra Large</div><div style="font-size:11px;color:var(--text-muted);">Bold impact — headlines only</div></div>
+      </div>
+    </div>
+    <!-- Apply to all toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px;background:var(--off-white);border-radius:10px;border:1px solid var(--border);">
+      <input type="checkbox" id="fontsize-all" style="width:16px;height:16px;accent-color:var(--ruby);cursor:pointer;"/>
+      <label for="fontsize-all" style="font-size:12px;font-weight:700;color:var(--text-mid);cursor:pointer;">Apply to all slides</label>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:16px;" onclick="closeModal('modal-fontsize')">Cancel</button>
   </div></div>
 </div>
 
@@ -890,7 +923,9 @@ function buildSlideHTML(slide,isThumbnail){
   const fontStack=getFontStack(slide.font||tpl.font);
   const T=isThumbnail;
   const p=T?0.32:1;
-  const hs=(b)=>T?`${Math.round(b*p)}px`:`${b}px`;
+  // fontSize multiplier: 1=normal, 1.2=large, 1.4=XL — user controlled per slide
+  const fsm = T ? 1 : (slide.fontScale||1);
+  const hs=(b,noScale)=>T?`${Math.round(b*p)}px`:(noScale?`${b}px`:`${Math.round(b*fsm)}px`);
 
   // Photo layers
   let photoLayer='';
@@ -952,8 +987,8 @@ function buildSlideHTML(slide,isThumbnail){
         <div style="width:${hs(36)};height:${hs(3)};background:${accent};border-radius:2px;"></div>
         ${!centered?`<div style="width:${hs(16)};height:${hs(3)};background:${accent};opacity:.4;border-radius:2px;"></div>`:''}
       </div>
-      <h1 style="color:${textColor};font-size:${hs(38)};font-weight:900;line-height:1.1;margin-bottom:${hs(12)};letter-spacing:-0.025em;">${slide.headline||''}</h1>
-      ${slide.subheadline?`<p style="color:${textColor};font-size:${hs(15)};opacity:.75;font-weight:500;line-height:1.5;margin-bottom:${hs(22)};">${slide.subheadline}</p>`:''}
+      <h1 style="color:${textColor};font-size:${hs(52)};font-weight:900;line-height:1.05;margin-bottom:${hs(14)};letter-spacing:-0.025em;">${slide.headline||''}</h1>
+      ${slide.subheadline?`<p style="color:${textColor};font-size:${hs(20)};opacity:.75;font-weight:500;line-height:1.5;margin-bottom:${hs(22)};">${slide.subheadline}</p>`:''}
       ${slide.type==='cta'?`<div style="display:inline-block;border:1.5px solid ${accent};color:${accent};padding:${hs(8)} ${hs(24)};border-radius:${hs(4)};font-size:${hs(10)};font-family:'DM Mono',monospace;letter-spacing:.14em;font-weight:700;">GET STARTED · RUBYWALL.COM</div>`:''}
     </div>`;
     return `<div style="width:100%;height:100%;background:${bg};display:flex;align-items:center;justify-content:${centered?'center':'flex-start'};padding:${T?'10px 16px':'44px 52px'};padding-left:calc(${T?'16px':'52px'} + ${leftPad});position:relative;overflow:hidden;font-family:${fontStack};">
@@ -964,31 +999,31 @@ function buildSlideHTML(slide,isThumbnail){
   // Body slides — structured with header row
   const headerLine=`<div style="display:flex;align-items:center;gap:${hs(10)};margin-bottom:${hs(8)};padding-bottom:${hs(8)};border-bottom:${hs(1.5)} solid ${accent}20;">
     <div style="width:${hs(3)};height:${hs(18)};background:${accent};border-radius:1px;flex-shrink:0;"></div>
-    <span style="color:${accent};font-size:${hs(9)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-weight:700;">${slide.type.toUpperCase()}</span>
+    <span style="color:${accent};font-size:${hs(11)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-weight:700;">${slide.type.toUpperCase()}</span>
   </div>`;
 
   if(slide.type==='intro'){
     content=`<div style="z-index:2;width:${cW};margin-left:${cOff};padding-left:${leftPad};">
       ${headerLine}
-      <h2 style="color:${textColor};font-size:${hs(24)};font-weight:800;line-height:1.2;margin-bottom:${hs(12)};letter-spacing:-0.02em;">${slide.headline||''}</h2>
-      <p style="color:${textColor};font-size:${hs(13)};line-height:1.75;opacity:.80;max-width:${hs(560)};">${slide.body||''}</p>
+      <h2 style="color:${textColor};font-size:${hs(34)};font-weight:800;line-height:1.15;margin-bottom:${hs(14)};letter-spacing:-0.02em;">${slide.headline||''}</h2>
+      <p style="color:${textColor};font-size:${hs(18)};line-height:1.7;opacity:.80;max-width:${hs(580)};">${slide.body||''}</p>
     </div>`;
   } else if(slide.type==='points'){
     const pts=(slide.points||[]).map((pt,i)=>`
       <div style="display:flex;align-items:flex-start;gap:${hs(12)};margin-bottom:${hs(9)};padding:${hs(8)} ${hs(10)};background:${accent}09;border-radius:${hs(6)};border-left:${hs(3)} solid ${accent};">
         <span style="color:${accent};font-size:${hs(9)};font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;margin-top:${hs(2)};letter-spacing:.05em;">${String(i+1).padStart(2,'0')}</span>
-        <span style="color:${textColor};font-size:${hs(13)};line-height:1.45;font-weight:600;">${pt}</span>
+        <span style="color:${textColor};font-size:${hs(17)};line-height:1.45;font-weight:600;">${pt}</span>
       </div>`).join('');
     content=`<div style="z-index:2;width:${cW};margin-left:${cOff};padding-left:${leftPad};">
       ${headerLine}
-      <h2 style="color:${textColor};font-size:${hs(20)};font-weight:800;margin-bottom:${hs(12)};letter-spacing:-0.01em;">${slide.headline||''}</h2>
+      <h2 style="color:${textColor};font-size:${hs(28)};font-weight:800;margin-bottom:${hs(14)};letter-spacing:-0.01em;">${slide.headline||''}</h2>
       ${pts}
     </div>`;
   } else if(slide.type==='quote'){
     content=`<div style="z-index:2;max-width:${hs(640)};padding-left:${leftPad};">
       ${headerLine}
       <div style="border-left:${hs(4)} solid ${accent};padding-left:${hs(20)};margin:${hs(12)} 0;">
-        <p style="color:${textColor};font-size:${hs(19)};font-style:italic;font-weight:600;line-height:1.55;margin-bottom:${hs(14)};">&ldquo;${slide.body||''}&rdquo;</p>
+        <p style="color:${textColor};font-size:${hs(26)};font-style:italic;font-weight:600;line-height:1.5;margin-bottom:${hs(16)};">&ldquo;${slide.body||''}&rdquo;</p>
         <div style="display:flex;align-items:center;gap:${hs(10)};">
           <div style="width:${hs(20)};height:${hs(2)};background:${accent};"></div>
           <span style="color:${accent};font-size:${hs(10)};font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;font-weight:700;">${slide.headline||''}</span>
@@ -1002,9 +1037,9 @@ function buildSlideHTML(slide,isThumbnail){
       <div style="display:flex;align-items:flex-end;gap:${hs(24)};margin-top:${hs(8)};">
         <div>
           <div style="color:${accent};font-size:${hs(64)};font-weight:900;line-height:1;letter-spacing:-0.04em;">${st.number}</div>
-          <div style="color:${textColor};font-size:${hs(14)};font-weight:700;opacity:.75;margin-top:${hs(4)};">${st.label}</div>
+          <div style="color:${textColor};font-size:${hs(18)};font-weight:700;opacity:.75;margin-top:${hs(6)};">${st.label}</div>
         </div>
-        ${slide.body?`<div style="border-left:${hs(2)} solid ${accent}30;padding-left:${hs(20)};max-width:${hs(320)};"><p style="color:${textColor};font-size:${hs(12)};line-height:1.65;opacity:.72;">${slide.body}</p></div>`:''}
+        ${slide.body?`<div style="border-left:${hs(2)} solid ${accent}30;padding-left:${hs(20)};max-width:${hs(320)};"><p style="color:${textColor};font-size:${hs(16)};line-height:1.65;opacity:.72;">${slide.body}</p></div>`:''}
       </div>
     </div>`;
   } else {
@@ -1079,6 +1114,26 @@ function changeSlideColor(){
 function applyCustomColor(hex){
   const slide=currentSlides[activeSlideIdx];slide.customBg=hex;slide.customTextColor='#FFFFFF';
   renderActiveSlide();renderThumbs();
+}
+
+// ─── Font Size ────────────────────────────────────────────────────
+function changeFontSize(){
+  // Pre-check the "apply to all" box based on whether all slides share the same scale
+  const current=currentSlides[activeSlideIdx].fontScale||1;
+  document.getElementById('fontsize-all').checked=false;
+  openModal('modal-fontsize');
+}
+function applyFontSize(scale){
+  const applyAll=document.getElementById('fontsize-all').checked;
+  if(applyAll){
+    currentSlides.forEach(s=>s.fontScale=scale);
+    toast('Text size updated for all slides','success');
+  }else{
+    currentSlides[activeSlideIdx].fontScale=scale;
+    toast('Text size updated','success');
+  }
+  closeModal('modal-fontsize');
+  renderThumbs();renderActiveSlide();
 }
 
 // ─── Font Picker ──────────────────────────────────────────────────
