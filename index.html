@@ -251,7 +251,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
         <div>
           <h3 style="font-weight:800;font-size:15px;margin-bottom:2px;">3. Add Data Visualizations <span style="font-size:11px;font-weight:600;color:var(--text-muted);">— optional</span></h3>
-          <p style="color:var(--text-muted);font-size:12px;">Paste any data — numbers, stats, comparisons — Claude picks the best chart type and adds it to a slide.</p>
+          <p style="color:var(--text-muted);font-size:12px;">Paste any data — numbers, stats, comparisons — Claude picks the best chart type. Charts are <strong>automatically included</strong> when you hit Generate Deck.</p>
         </div>
         <button class="btn btn-sm btn-secondary" onclick="openDataViz()">+ Add Chart</button>
       </div>
@@ -810,6 +810,8 @@ function showBuilder(){
   document.getElementById('builder-prompt').value='';
   uploadedPhotos=[];currentSlides=[];
   document.getElementById('uploaded-photos').innerHTML='';
+  vizChips=[];
+  renderVizChips();
   renderTemplatePicker();
   initSlideCountStepper();
 }
@@ -968,7 +970,31 @@ async function generateDeck(){
     }
     const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
     currentSlides=parsed.map((s,i)=>({...s,id:'s_'+i+'_'+Date.now(),font:selectedTemplate.font}));
-    activeSlideIdx=0;recordUsage();updateHeaderBadge();showDeckViewer();toast('Deck ready!','success');
+
+    // ── Auto-insert any charts created in Step 3 ──────────────────
+    if(vizChips.length>0){
+      // Insert before the last slide (CTA) so charts sit naturally before the close
+      const insertAt=Math.max(currentSlides.length-1,0);
+      vizChips.forEach((chip,i)=>{
+        const chartSlide={
+          id:'viz_auto_'+i+'_'+Date.now(),
+          type:'chart',
+          headline:chip.label||'Data Insight',
+          body:chip.description||'',
+          chartImage:chip.imgSrc,
+          chartTitle:chip.label||'',
+          chartDescription:chip.description||'',
+          photo:null,photoPlacement:null,
+          font:selectedTemplate.font,fontScale:1,
+        };
+        currentSlides.splice(insertAt+i,0,chartSlide);
+      });
+      toast(`Deck ready — ${vizChips.length} chart${vizChips.length>1?'s':''} included automatically!`,'success');
+    }else{
+      toast('Deck ready!','success');
+    }
+
+    activeSlideIdx=0;recordUsage();updateHeaderBadge();showDeckViewer();
   }catch(e){toast('Generation failed — please try again','error');console.error(e);}
   finally{document.getElementById('builder-loading').style.display='none';document.getElementById('generate-btn').disabled=false;}
 }
@@ -1711,7 +1737,7 @@ async function insertChartAsNewSlide(){
 }
 
 function addVizChip(label,imgSrc){
-  vizChips.push({label,imgSrc});
+  vizChips.push({label,imgSrc,description:currentVizData?.description||''});
   renderVizChips();
 }
 
@@ -1719,10 +1745,19 @@ function renderVizChips(){
   const wrap=document.getElementById('viz-chips');
   if(!wrap)return;
   wrap.innerHTML='';
+  if(vizChips.length===0){
+    wrap.innerHTML='<span style="font-size:11px;color:var(--text-muted);">No charts added yet — charts you create here will be automatically inserted when you generate the deck.</span>';
+    return;
+  }
+  // Count label
+  const countEl=document.createElement('div');
+  countEl.style.cssText='font-size:11px;font-weight:700;color:var(--ruby);margin-bottom:4px;width:100%;';
+  countEl.textContent=`${vizChips.length} chart${vizChips.length>1?'s':''} will be auto-inserted into your deck:`;
+  wrap.appendChild(countEl);
   vizChips.forEach((chip,i)=>{
     const div=document.createElement('div');
-    div.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--ruby-pale);border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--ruby);cursor:pointer;';
-    div.innerHTML=`&#128202; ${chip.label} <span onclick="removeVizChip(${i})" style="margin-left:2px;opacity:.6;font-size:12px;">&#x2715;</span>`;
+    div.style.cssText='display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:var(--ruby-pale);border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:700;color:var(--ruby);';
+    div.innerHTML=`&#128202; ${chip.label} <span onclick="removeVizChip(${i})" style="margin-left:2px;opacity:.6;font-size:12px;cursor:pointer;" title="Remove">&#x2715;</span>`;
     wrap.appendChild(div);
   });
 }
