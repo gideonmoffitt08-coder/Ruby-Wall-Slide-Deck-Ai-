@@ -121,15 +121,15 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
             <div style="display:grid;gap:8px;margin-top:4px;">
               <label id="plan-starter" onclick="selectPlan('starter')" style="display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
                 <input type="radio" name="plan" value="starter" style="margin-top:2px;" checked/>
-                <div><div style="font-weight:800;font-size:13px;">Starter — <span style="color:var(--ruby);">$9.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">6 slides · 3 presentations / 48hrs</div></div>
+                <div><div style="font-weight:800;font-size:13px;">Starter — <span style="color:var(--ruby);">$9.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">12 slides · 3 presentations / 48hrs · No data viz</div></div>
               </label>
               <label id="plan-standard" onclick="selectPlan('standard')" style="display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
                 <input type="radio" name="plan" value="standard" style="margin-top:2px;"/>
-                <div><div style="font-weight:800;font-size:13px;">Standard — <span style="color:var(--gold);">$15.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">12 slides · 5 presentations / 48hrs</div></div>
+                <div><div style="font-weight:800;font-size:13px;">Standard — <span style="color:var(--gold);">$15.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">18 slides · 5 presentations / 48hrs · Charts &amp; tables</div></div>
               </label>
               <label id="plan-premium" onclick="selectPlan('premium')" style="display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:2px solid var(--border);cursor:pointer;transition:all .15s;">
                 <input type="radio" name="plan" value="premium" style="margin-top:2px;"/>
-                <div><div style="font-weight:800;font-size:13px;">Premium — <span style="color:#7C3AED;">$24.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">18 slides · 8 presentations / 48hrs</div></div>
+                <div><div style="font-weight:800;font-size:13px;">Premium — <span style="color:#7C3AED;">$24.99/mo</span></div><div style="font-size:11px;color:var(--text-muted);margin-top:1px;">24 slides · 8 presentations / 48hrs · Charts &amp; tables</div></div>
               </label>
             </div>
           </div>
@@ -246,7 +246,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
     </div>
 
     <!-- Step 3: Data Viz -->
-    <div class="card" style="margin-bottom:18px;">
+    <div class="card" id="viz-card" style="margin-bottom:18px;">
       <div style="height:4px;background:linear-gradient(90deg,var(--ruby),var(--ruby-light));border-radius:4px;margin:-24px -24px 20px;"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
         <div>
@@ -294,7 +294,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
             <button class="btn btn-sm btn-secondary" onclick="changeSlideColor()">Background</button>
             <button class="btn btn-sm btn-secondary" onclick="changeSlideFont()">Font</button>
             <button class="btn btn-sm btn-secondary" onclick="changeFontSize()">Text Size</button>
-            <button class="btn btn-sm btn-secondary" onclick="addChartToCurrentSlide()">Add Chart</button>
+            <button id="viz-toolbar-btn" class="btn btn-sm btn-secondary" onclick="addChartToCurrentSlide()">Add Chart</button>
             <button class="btn btn-sm btn-secondary" onclick="addPhotoToSlide()">Add Photo</button>
             <button class="btn btn-sm btn-danger" onclick="deleteSlide()">Delete Slide</button>
             <button class="btn btn-sm btn-secondary" onclick="addNewSlide()">+ New Slide</button>
@@ -389,8 +389,7 @@ Mar   | 190   | 41"></textarea>
         </div>
         <div id="viz-description" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;font-style:italic;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="insertChartToSlide()">Insert into Current Slide</button>
-          <button class="btn btn-secondary" onclick="insertChartAsNewSlide()">Add as New Slide</button>
+          <button class="btn btn-primary" onclick="saveChartToQueue()">Save Chart to Deck</button>
           <button class="btn btn-secondary" onclick="switchVizTab('paste')">← Back</button>
         </div>
       </div>
@@ -527,10 +526,10 @@ const ADMIN_EMAIL = 'gideon@rubywall.com';
 const ADMIN_PASS  = 'Einstein_Apollo';
 
 const PLANS = {
-  starter:  {name:'Starter', price:'$9.99/mo',  slides:6,  limit:3,  windowHrs:48, badge:'badge-ruby'},
-  standard: {name:'Standard',price:'$15.99/mo', slides:12, limit:5,  windowHrs:48, badge:'badge-gold'},
-  premium:  {name:'Premium', price:'$24.99/mo', slides:18, limit:8,  windowHrs:48, badge:'badge-blue'},
-  admin:    {name:'Admin',   price:'Free',       slides:99, limit:999,windowHrs:1,  badge:'badge-blue'},
+  starter:  {name:'Starter', price:'$9.99/mo',  slides:12, limit:3,  windowHrs:48, badge:'badge-ruby',  dataViz:false},
+  standard: {name:'Standard',price:'$15.99/mo', slides:18, limit:5,  windowHrs:48, badge:'badge-gold',  dataViz:true},
+  premium:  {name:'Premium', price:'$24.99/mo', slides:24, limit:8,  windowHrs:48, badge:'badge-blue',  dataViz:true},
+  admin:    {name:'Admin',   price:'Free',       slides:99, limit:999,windowHrs:1,  badge:'badge-blue',  dataViz:true},
 };
 
 // ─── Fonts ───────────────────────────────────────────────────────
@@ -813,6 +812,12 @@ function showBuilder(){
   vizChips=[];
   renderVizChips();
   renderTemplatePicker();
+  // Show/hide data viz based on plan
+  const hasDataViz=PLANS[currentUser.plan].dataViz;
+  const vizCard=document.getElementById('viz-card');
+  const vizToolbarBtn=document.getElementById('viz-toolbar-btn');
+  if(vizCard) vizCard.style.display=hasDataViz?'block':'none';
+  if(vizToolbarBtn) vizToolbarBtn.style.display=hasDataViz?'':'none';
   initSlideCountStepper();
 }
 function showAdmin(){showView('admin');renderAdmin();}
@@ -854,7 +859,7 @@ function renderDashboard(){
   updateHeaderBadge();
   const plan=PLANS[currentUser.plan];
   document.getElementById('dash-greeting').textContent=`Welcome back, ${currentUser.name.split(' ')[0]}!`;
-  document.getElementById('dash-sub').textContent=`${plan.name} Plan · ${plan.slides} slides per deck · ${plan.price}`;
+  document.getElementById('dash-sub').textContent=`${plan.name} Plan · Up to ${plan.slides} slides per deck · ${plan.price}${!plan.dataViz?' · Upgrade for charts & tables':''}`;
   const{used,limit,windowHrs}=getUsageWindow();
   const pct=currentUser.plan==='admin'?0:Math.round((used/limit)*100);
   document.getElementById('usage-fill').style.width=pct+'%';
@@ -924,9 +929,10 @@ function updateSlideCountUI(){
 }
 
 // ─── System Prompt ────────────────────────────────────────────────
-const SYSTEM_PROMPT=(slideCount,tpl)=>`You are a professional presentation designer. Generate a slide deck in JSON format.
+const SYSTEM_PROMPT=(slideCount,tpl,chartCount=0)=>`You are a professional presentation designer. Generate a slide deck in JSON format.
 
 Return ONLY a valid JSON array of exactly ${slideCount} slide objects. No markdown, no backticks. Raw JSON only.
+${chartCount>0?`IMPORTANT: The user has ${chartCount} data chart slide(s) that will be automatically inserted. Generate exactly ${slideCount} slides (the charts are already accounted for in this count). Do NOT generate extra chart or data slides — focus on text-based slides: title, intro, points, quote, stat, cta.`:''}
 
 Each slide object:
 - "type": one of "title","intro","points","quote","stat","cta"
@@ -948,7 +954,10 @@ async function generateDeck(){
   const prompt=document.getElementById('builder-prompt').value.trim();
   if(!prompt){toast('Please describe your presentation first','error');return;}
   if(!canMakePresentation())return;
-  const slideCount=selectedSlideCount||PLANS[currentUser.plan].slides;
+  const totalSlides=selectedSlideCount||PLANS[currentUser.plan].slides;
+  const chartCount=vizChips.length;
+  // Text slides = total requested minus charts (min 1 text slide always)
+  const slideCount=Math.max(1, totalSlides - chartCount);
   document.getElementById('builder-loading').style.display='block';
   document.getElementById('deck-viewer').style.display='none';
   document.getElementById('generate-btn').disabled=true;
@@ -956,14 +965,14 @@ async function generateDeck(){
     const endpoint=BACKEND_URL&&BACKEND_URL!=='YOUR_WORKER_URL_HERE'?BACKEND_URL+'/deckai':null;
     let raw;
     if(endpoint){
-      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,slideCount,systemPrompt:SYSTEM_PROMPT(slideCount,selectedTemplate)})});
+      const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,slideCount,systemPrompt:SYSTEM_PROMPT(slideCount,selectedTemplate,chartCount)})});
       const data=await res.json();
       if(data.error){toast('Error: '+data.error,'error');return;}
       raw=data.result;
     }else{
       const apiKey=localStorage.getItem('deckaiApiKey')||'';
       if(!apiKey){openModal('modal-api-key');return;}
-      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,system:SYSTEM_PROMPT(slideCount,selectedTemplate),messages:[{role:'user',content:prompt}]})});
+      const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:4000,system:SYSTEM_PROMPT(slideCount,selectedTemplate,chartCount),messages:[{role:'user',content:prompt}]})});
       const data=await res.json();
       if(data.error){toast('API Error: '+data.error.message,'error');return;}
       raw=data.content?.find(b=>b.type==='text')?.text||'[]';
@@ -971,9 +980,10 @@ async function generateDeck(){
     const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
     currentSlides=parsed.map((s,i)=>({...s,id:'s_'+i+'_'+Date.now(),font:selectedTemplate.font}));
 
-    // ── Auto-insert any charts created in Step 3 ──────────────────
+    // ── Auto-insert charts — they count toward slide total ─────────
+    // Charts slot in before the CTA (last) slide, replacing nothing —
+    // the SYSTEM_PROMPT already told Claude to generate fewer text slides
     if(vizChips.length>0){
-      // Insert before the last slide (CTA) so charts sit naturally before the close
       const insertAt=Math.max(currentSlides.length-1,0);
       vizChips.forEach((chip,i)=>{
         const chartSlide={
@@ -989,7 +999,7 @@ async function generateDeck(){
         };
         currentSlides.splice(insertAt+i,0,chartSlide);
       });
-      toast(`Deck ready — ${vizChips.length} chart${vizChips.length>1?'s':''} included automatically!`,'success');
+      toast(`Deck ready — ${vizChips.length} chart${vizChips.length>1?'s':''} included!`,'success');
     }else{
       toast('Deck ready!','success');
     }
@@ -1686,55 +1696,37 @@ function captureVizAsImage(){
   });
 }
 
+async function saveChartToQueue(){
+  toast('Saving chart...','');
+  const imgSrc=await captureVizAsImage();
+  if(!imgSrc){toast('Could not capture chart image','error');return;}
+  addVizChip(currentVizData.title||'Chart',imgSrc);
+  closeModal('modal-dataviz');
+  // Reset for next chart
+  document.getElementById('viz-data-input').value='';
+  document.getElementById('viz-title-input').value='';
+  forcedChartType=null;
+  currentVizData=null;
+  if(currentChartInstance){currentChartInstance.destroy();currentChartInstance=null;}
+  toast('Chart saved — it will be included when you generate your deck','success');
+}
+
+// Keep these for toolbar "Add Chart" on existing slide (post-generation use)
 async function insertChartToSlide(){
   toast('Capturing chart...','');
   const imgSrc=await captureVizAsImage();
-  if(!imgSrc){toast('Could not capture chart — try inserting as a new slide instead','error');return;}
-  // If no slides exist yet, create one
-  if(!currentSlides.length){
-    currentSlides.push({id:'viz_'+Date.now(),type:'chart',headline:currentVizData.title||'Data Insight',body:currentVizData.description||'',chartImage:imgSrc,chartTitle:currentVizData.title||'',chartDescription:currentVizData.description||'',photo:null,photoPlacement:null,font:selectedTemplate.font,fontScale:1});
-    activeSlideIdx=0;
-  }else{
-    const slide=currentSlides[activeSlideIdx];
-    slide.type='chart';
-    slide.chartImage=imgSrc;
-    slide.chartTitle=currentVizData.title||'';
-    slide.chartDescription=currentVizData.description||'';
-    slide.headline=slide.headline||currentVizData.title||'Data Insight';
-  }
+  if(!imgSrc){toast('Could not capture chart','error');return;}
+  if(!currentSlides.length){saveChartToQueue();return;}
+  const slide=currentSlides[activeSlideIdx];
+  slide.type='chart';slide.chartImage=imgSrc;
+  slide.chartTitle=currentVizData.title||'';slide.chartDescription=currentVizData.description||'';
+  slide.headline=slide.headline||currentVizData.title||'Data Insight';
   addVizChip(currentVizData.title||'Chart',imgSrc);
-  closeModal('modal-dataviz');
-  showDeckViewer();
-  toast('Chart added to slide!','success');
+  closeModal('modal-dataviz');renderThumbs();renderActiveSlide();
+  toast('Chart inserted into slide','success');
 }
 
-async function insertChartAsNewSlide(){
-  toast('Capturing chart...','');
-  const imgSrc=await captureVizAsImage();
-  if(!imgSrc){toast('Could not capture chart','error');return;}
-  const newSlide={
-    id:'viz_'+Date.now(),
-    type:'chart',
-    headline:currentVizData.title||'Data Insight',
-    body:currentVizData.description||'',
-    chartImage:imgSrc,
-    chartTitle:currentVizData.title||'',
-    chartDescription:currentVizData.description||'',
-    photo:null,photoPlacement:null,
-    font:selectedTemplate.font,fontScale:1,
-  };
-  if(currentSlides.length){
-    currentSlides.splice(activeSlideIdx+1,0,newSlide);
-    activeSlideIdx++;
-  }else{
-    currentSlides.push(newSlide);
-    activeSlideIdx=0;
-  }
-  addVizChip(currentVizData.title||'Chart',imgSrc);
-  closeModal('modal-dataviz');
-  showDeckViewer();
-  toast('Chart slide added!','success');
-}
+async function insertChartAsNewSlide(){await saveChartToQueue();}
 
 function addVizChip(label,imgSrc){
   vizChips.push({label,imgSrc,description:currentVizData?.description||''});
