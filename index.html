@@ -83,6 +83,59 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
 /* Photo placement modal */
 .photo-placement-btn{border:2px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:center;transition:all .15s;background:#fff;}
 .photo-placement-btn:hover{border-color:var(--ruby);background:var(--ruby-pale2);}
+/* ── Presentation Mode Transitions ── */
+#pres-slide-a, #pres-slide-b { will-change: transform, opacity; }
+.trans-fade-out { animation: transFadeOut var(--td,.5s) ease forwards; }
+.trans-fade-in  { animation: transFadeIn  var(--td,.5s) ease forwards; }
+@keyframes transFadeOut { to { opacity:0; } }
+@keyframes transFadeIn  { from { opacity:0; } to { opacity:1; } }
+.trans-slideLeft-out { animation: transSlideLeftOut var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+.trans-slideLeft-in  { animation: transSlideLeftIn  var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes transSlideLeftOut { to { transform:translateX(-100%); opacity:.3; } }
+@keyframes transSlideLeftIn  { from { transform:translateX(100%); opacity:.3; } to { transform:translateX(0); opacity:1; } }
+.trans-slideRight-out { animation: transSlideRightOut var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+.trans-slideRight-in  { animation: transSlideRightIn  var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes transSlideRightOut { to { transform:translateX(100%); opacity:.3; } }
+@keyframes transSlideRightIn  { from { transform:translateX(-100%); opacity:.3; } to { transform:translateX(0); opacity:1; } }
+.trans-slideUp-out { animation: transSlideUpOut var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+.trans-slideUp-in  { animation: transSlideUpIn  var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes transSlideUpOut { to { transform:translateY(-100%); opacity:.3; } }
+@keyframes transSlideUpIn  { from { transform:translateY(100%); opacity:.3; } to { transform:translateY(0); opacity:1; } }
+.trans-zoom-out { animation: transZoomOut var(--td,.5s) ease forwards; }
+.trans-zoom-in  { animation: transZoomIn  var(--td,.5s) ease forwards; }
+@keyframes transZoomOut { to { transform:scale(1.12); opacity:0; } }
+@keyframes transZoomIn  { from { transform:scale(0.88); opacity:0; } to { transform:scale(1); opacity:1; } }
+.trans-zoomout-out { animation: transZoomOutOut var(--td,.5s) ease forwards; }
+.trans-zoomout-in  { animation: transZoomOutIn  var(--td,.5s) ease forwards; }
+@keyframes transZoomOutOut { to { transform:scale(0.88); opacity:0; } }
+@keyframes transZoomOutIn  { from { transform:scale(1.12); opacity:0; } to { transform:scale(1); opacity:1; } }
+.trans-flip-out { animation: transFlipOut var(--td,.5s) ease forwards; }
+.trans-flip-in  { animation: transFlipIn  var(--td,.5s) ease forwards; }
+@keyframes transFlipOut { to { transform:perspective(1200px) rotateY(-90deg); opacity:0; } }
+@keyframes transFlipIn  { from { transform:perspective(1200px) rotateY(90deg); opacity:0; } to { transform:perspective(1200px) rotateY(0); opacity:1; } }
+.trans-dissolve-out { animation: transDissolveOut var(--td,.5s) ease forwards; }
+.trans-dissolve-in  { animation: transDissolveIn  var(--td,.5s) ease forwards; }
+@keyframes transDissolveOut { to { opacity:0; filter:blur(12px); transform:scale(1.04); } }
+@keyframes transDissolveIn  { from { opacity:0; filter:blur(12px); transform:scale(.97); } to { opacity:1; filter:blur(0); transform:scale(1); } }
+.trans-push-out { animation: transPushOut var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+.trans-push-in  { animation: transPushIn  var(--td,.5s) cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes transPushOut { to { transform:translateX(-100%) scale(.92); opacity:.2; } }
+@keyframes transPushIn  { from { transform:translateX(100%) scale(.92); opacity:.2; } to { transform:translateX(0) scale(1); opacity:1; } }
+.trans-none-out { opacity:0!important; }
+.trans-none-in  { opacity:1!important; }
+#pres-slide-a > div, #pres-slide-b > div {
+  width: min(92vw, calc(92vh * 16 / 9));
+  aspect-ratio: 16/9; border-radius:8px; overflow:hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+#pres-controls { opacity:0; transition:opacity .3s; }
+#presentation-overlay:hover #pres-controls { opacity:1; }
+#pres-dots { opacity:0; transition:opacity .3s; }
+#presentation-overlay:hover #pres-dots { opacity:1; }
+.tpick-card { border:2px solid var(--border); border-radius:10px; padding:12px; cursor:pointer; transition:all .15s; background:#fff; text-align:center; }
+.tpick-card:hover { border-color:var(--ruby); background:var(--ruby-pale2); }
+.tpick-card.selected { border-color:var(--ruby); background:var(--ruby-pale2); }
+
 @media(max-width:768px){.app-header{padding:10px 14px;}.deck-layout{grid-template-columns:1fr!important;}.thumb-col{display:flex!important;flex-direction:row!important;overflow-x:auto;gap:8px;}}
 </style>
 </head>
@@ -268,6 +321,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--off-white);color:
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="btn btn-sm btn-secondary" onclick="prevSlide()">← Prev</button>
           <button class="btn btn-sm btn-secondary" onclick="nextSlide()">Next →</button>
+          <button class="btn btn-sm btn-secondary" onclick="pickTransition()" id="transition-btn" title="Choose slide transition">&#9654; Transition</button>
+          <button class="btn btn-sm" style="background:linear-gradient(135deg,#1A0A0D,#3D1520);color:#fff;font-weight:800;" onclick="startPresentation()" title="Present fullscreen">&#9654; Present</button>
           <button class="btn btn-sm btn-primary" onclick="saveDeck()">Save Deck</button>
         </div>
       </div>
@@ -402,6 +457,59 @@ Mar   | 190   | 41"></textarea>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ═══ PRESENTATION MODE OVERLAY ═══ -->
+<div id="presentation-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#000;flex-direction:column;">
+  <!-- Main slide area -->
+  <div id="pres-slide-area" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer;" onclick="presNext()">
+    <!-- Two slide containers for transitions -->
+    <div id="pres-slide-a" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;"></div>
+    <div id="pres-slide-b" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;"></div>
+  </div>
+
+  <!-- Controls bar -->
+  <div id="pres-controls" style="position:fixed;bottom:0;left:0;right:0;padding:14px 28px;background:linear-gradient(transparent,rgba(0,0,0,0.85));display:flex;align-items:center;justify-content:space-between;transition:opacity .3s;z-index:9001;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button onclick="presExit()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">✕ Exit</button>
+      <span id="pres-deck-name" style="color:rgba(255,255,255,0.6);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.1em;"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="presPrev(event)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">← Prev</button>
+      <span id="pres-counter" style="color:#fff;font-size:13px;font-weight:700;font-family:'DM Mono',monospace;min-width:60px;text-align:center;"></span>
+      <button onclick="presNext(event)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Next →</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span id="pres-transition-label" style="color:rgba(255,255,255,0.5);font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.1em;"></span>
+      <button onclick="presToggleFullscreen(event)" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:#fff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">⛶ Fullscreen</button>
+    </div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="position:fixed;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1);z-index:9001;">
+    <div id="pres-progress" style="height:100%;background:var(--ruby);transition:width .3s ease;"></div>
+  </div>
+
+  <!-- Slide dots -->
+  <div id="pres-dots" style="position:fixed;bottom:70px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:9001;"></div>
+</div>
+
+<!-- Transition Picker Modal -->
+<div id="modal-transition" style="display:none;" class="modal-overlay" onclick="closeModalOutside(event,'modal-transition')">
+  <div class="modal-box" style="max-width:500px;"><div class="modal-stripe"></div><div class="modal-body">
+    <h3 style="font-weight:900;font-size:16px;margin-bottom:6px;">Slide Transitions</h3>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">Choose how slides animate when advancing in Presentation Mode.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="transition-grid"></div>
+    <div style="margin-top:16px;display:flex;align-items:center;gap:12px;padding:12px;background:var(--off-white);border-radius:10px;border:1px solid var(--border);">
+      <span style="font-size:11px;font-weight:700;color:var(--text-mid);">Speed:</span>
+      <div style="display:flex;gap:6px;">
+        <button onclick="setTransitionSpeed('fast')" id="speed-fast" class="btn btn-sm btn-secondary">Fast (0.3s)</button>
+        <button onclick="setTransitionSpeed('normal')" id="speed-normal" class="btn btn-sm btn-primary">Normal (0.5s)</button>
+        <button onclick="setTransitionSpeed('slow')" id="speed-slow" class="btn btn-sm btn-secondary">Slow (0.8s)</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:14px;" onclick="closeModal('modal-transition')">Done</button>
+  </div></div>
 </div>
 
 <!-- API Key -->
@@ -1757,6 +1865,233 @@ function renderVizChips(){
 function removeVizChip(i){
   vizChips.splice(i,1);
   renderVizChips();
+}
+
+// ─── Presentation Mode ───────────────────────────────────────────
+const TRANSITIONS = [
+  {id:'fade',      name:'Fade',        desc:'Smooth opacity blend'},
+  {id:'slideLeft', name:'Slide',       desc:'Push left on advance'},
+  {id:'slideUp',   name:'Rise',        desc:'Slides scroll upward'},
+  {id:'zoom',      name:'Zoom In',     desc:'New slide grows in'},
+  {id:'zoomout',   name:'Zoom Out',    desc:'Old slide shrinks away'},
+  {id:'flip',      name:'Flip',        desc:'3D card flip'},
+  {id:'dissolve',  name:'Dissolve',    desc:'Blur fade between slides'},
+  {id:'push',      name:'Push',        desc:'Slide pushes previous away'},
+  {id:'none',      name:'Cut',         desc:'Instant no animation'},
+];
+
+let selectedTransition = 'fade';
+let transitionSpeed = 'normal'; // fast=0.3s normal=0.5s slow=0.8s
+let presSlideIdx = 0;
+let presAnimating = false;
+let presActiveLayer = 'a'; // which div is currently showing
+
+const SPEED_MAP = {fast:'0.3s', normal:'0.5s', slow:'0.8s'};
+
+function pickTransition(){
+  renderTransitionGrid();
+  openModal('modal-transition');
+}
+
+function renderTransitionGrid(){
+  const grid = document.getElementById('transition-grid');
+  grid.innerHTML = '';
+  TRANSITIONS.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'tpick-card' + (t.id === selectedTransition ? ' selected' : '');
+    div.innerHTML = `<div style="font-weight:800;font-size:13px;color:var(--text);margin-bottom:3px;">${t.name}</div>
+      <div style="font-size:11px;color:var(--text-muted);">${t.desc}</div>`;
+    div.onclick = () => {
+      selectedTransition = t.id;
+      document.getElementById('transition-btn').textContent = '▶ ' + t.name;
+      document.querySelectorAll('.tpick-card').forEach(c => c.classList.remove('selected'));
+      div.classList.add('selected');
+      // Update label in pres overlay
+      const lbl = document.getElementById('pres-transition-label');
+      if(lbl) lbl.textContent = t.name.toUpperCase();
+      toast('Transition set to ' + t.name, 'success');
+    };
+    grid.appendChild(div);
+  });
+}
+
+function setTransitionSpeed(speed){
+  transitionSpeed = speed;
+  ['fast','normal','slow'].forEach(s => {
+    const btn = document.getElementById('speed-'+s);
+    if(btn){ btn.className = s === speed ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary'; }
+  });
+}
+
+function startPresentation(){
+  if(!currentSlides.length){ toast('Generate a deck first','error'); return; }
+  presSlideIdx = activeSlideIdx;
+  presActiveLayer = 'a';
+  presAnimating = false;
+
+  const overlay = document.getElementById('presentation-overlay');
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+
+  // Set CSS speed variable
+  overlay.style.setProperty('--td', SPEED_MAP[transitionSpeed]);
+
+  // Render first slide
+  const layerA = document.getElementById('pres-slide-a');
+  const layerB = document.getElementById('pres-slide-b');
+  layerA.innerHTML = `<div>${buildSlideHTML(currentSlides[presSlideIdx], false)}</div>`;
+  layerA.style.opacity = '1';
+  layerA.style.pointerEvents = 'auto';
+  layerB.style.opacity = '0';
+  layerB.style.pointerEvents = 'none';
+
+  // Update UI
+  updatePresUI();
+  renderPresDots();
+
+  // Label
+  const lbl = document.getElementById('pres-transition-label');
+  const t = TRANSITIONS.find(t => t.id === selectedTransition);
+  if(lbl && t) lbl.textContent = t.name.toUpperCase();
+
+  const nameEl = document.getElementById('pres-deck-name');
+  if(nameEl) nameEl.textContent = (currentSlides[0]?.headline || 'Presentation').toUpperCase();
+
+  // Keyboard navigation
+  document.addEventListener('keydown', presKeyHandler);
+
+  // Try fullscreen
+  try { overlay.requestFullscreen && overlay.requestFullscreen(); } catch(e){}
+}
+
+function presKeyHandler(e){
+  if(!document.getElementById('presentation-overlay').style.display || document.getElementById('presentation-overlay').style.display === 'none') return;
+  if(e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); presNext(); }
+  if(e.key === 'ArrowLeft'  || e.key === 'ArrowUp') { e.preventDefault(); presPrev(); }
+  if(e.key === 'Escape') presExit();
+}
+
+function presNext(e){
+  if(e) e.stopPropagation();
+  if(presAnimating || presSlideIdx >= currentSlides.length - 1) return;
+  presGoTo(presSlideIdx + 1, 'next');
+}
+
+function presPrev(e){
+  if(e) e.stopPropagation();
+  if(presAnimating || presSlideIdx <= 0) return;
+  presGoTo(presSlideIdx - 1, 'prev');
+}
+
+function presGoTo(idx, dir){
+  if(presAnimating) return;
+  presAnimating = true;
+
+  const outLayer = presActiveLayer === 'a' ? 'pres-slide-a' : 'pres-slide-b';
+  const inLayer  = presActiveLayer === 'a' ? 'pres-slide-b' : 'pres-slide-a';
+  const outEl = document.getElementById(outLayer);
+  const inEl  = document.getElementById(inLayer);
+
+  // Load new slide into incoming layer
+  inEl.innerHTML = `<div>${buildSlideHTML(currentSlides[idx], false)}</div>`;
+  inEl.style.opacity = '1';
+  inEl.style.pointerEvents = 'none';
+
+  const td = SPEED_MAP[transitionSpeed];
+  const ms = parseFloat(td) * 1000;
+
+  // Determine transition class names
+  const tr = selectedTransition;
+  let outClass, inClass;
+
+  if(tr === 'none'){
+    outEl.style.opacity = '0';
+    inEl.style.opacity = '1';
+    inEl.style.pointerEvents = 'auto';
+    outEl.style.pointerEvents = 'none';
+    presSlideIdx = idx;
+    presActiveLayer = presActiveLayer === 'a' ? 'b' : 'a';
+    updatePresUI();
+    setTimeout(() => { presAnimating = false; }, 50);
+    return;
+  }
+
+  if(tr === 'slideLeft'){
+    outClass = dir === 'next' ? 'trans-slideLeft-out' : 'trans-slideRight-out';
+    inClass  = dir === 'next' ? 'trans-slideLeft-in'  : 'trans-slideRight-in';
+  } else {
+    outClass = `trans-${tr}-out`;
+    inClass  = `trans-${tr}-in`;
+  }
+
+  // Remove any old anim classes
+  outEl.classList.remove(...outEl.classList);
+  inEl.classList.remove(...inEl.classList);
+
+  // Animate
+  requestAnimationFrame(() => {
+    outEl.classList.add(outClass);
+    inEl.classList.add(inClass);
+
+    setTimeout(() => {
+      // Swap layers
+      outEl.style.opacity = '0';
+      outEl.style.pointerEvents = 'none';
+      outEl.classList.remove(outClass);
+      inEl.style.opacity = '1';
+      inEl.style.pointerEvents = 'auto';
+      inEl.classList.remove(inClass);
+
+      presSlideIdx = idx;
+      presActiveLayer = presActiveLayer === 'a' ? 'b' : 'a';
+      updatePresUI();
+      presAnimating = false;
+    }, ms + 30);
+  });
+}
+
+function updatePresUI(){
+  const total = currentSlides.length;
+  document.getElementById('pres-counter').textContent = `${presSlideIdx + 1} / ${total}`;
+  const pct = ((presSlideIdx + 1) / total) * 100;
+  document.getElementById('pres-progress').style.width = pct + '%';
+  renderPresDots();
+}
+
+function renderPresDots(){
+  const wrap = document.getElementById('pres-dots');
+  if(!wrap) return;
+  const total = currentSlides.length;
+  // Only show dots if ≤ 20 slides
+  if(total > 20){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = '';
+  currentSlides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:${i === presSlideIdx ? '20px' : '7px'};height:7px;border-radius:4px;background:${i === presSlideIdx ? 'var(--ruby)' : 'rgba(255,255,255,0.35)'};transition:all .25s;cursor:pointer;`;
+    dot.onclick = (e) => { e.stopPropagation(); if(i !== presSlideIdx) presGoTo(i, i > presSlideIdx ? 'next' : 'prev'); };
+    wrap.appendChild(dot);
+  });
+}
+
+function presToggleFullscreen(e){
+  e.stopPropagation();
+  const overlay = document.getElementById('presentation-overlay');
+  if(!document.fullscreenElement){
+    overlay.requestFullscreen && overlay.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+}
+
+function presExit(){
+  const overlay = document.getElementById('presentation-overlay');
+  overlay.style.display = 'none';
+  document.removeEventListener('keydown', presKeyHandler);
+  try { document.exitFullscreen && document.exitFullscreen(); } catch(e){}
+  // Sync builder to where user left off in presentation
+  activeSlideIdx = presSlideIdx;
+  renderThumbs();
+  renderActiveSlide();
 }
 
 // ─── API Key ───────────────────────────────────────────────────────
